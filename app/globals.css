@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fff9f2;
+  --foreground: #4a4a4a; /* Dark Gray */
+  --terracotta: #d97c5f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-terracotta: var(--terracotta);
+  --animate-fade-in: fade-in 0.5s ease-in-out;
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
