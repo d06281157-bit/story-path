@@ -95,3 +95,84 @@ Key Features & Files
    app/home/page.tsx
    .
    Images use Unsplash source URLs.
+
+
+Project Context: Story-Path (Travel Personality & Exploration App)
+1. Project Overview
+Name: story-path Description: A Next.js application designed to help users discover Taiwan travel destinations based on their personality (Travel DNA) or through direct exploration with filters. Key Features:
+
+Interactive Home Page: Full-screen slider showcasing 4 major cities (Taipei, Taichung, Kaohsiung, Taitung) with sub-attractions.
+Travel Quiz: A personality test to determine travel style (OldStreet, Nature, Culture, Lifestyle).
+Result Analysis: Radar chart visualization of travel traits and personalized route recommendations.
+Explore Page: Discovery hub with filters for Region, Category, and Duration.
+Favorites (My List): functionality to save destinations (using localStorage).
+2. Tech Stack
+Framework: Next.js 16 (App Router)
+Language: TypeScript
+Styling: Tailwind CSS 4, Lucide React (Icons)
+Visualization: Recharts (Radar Chart in Results)
+State Management: React Hooks (useState, useEffect, useContext implied), localStorage for favorites.
+Assets: loremflickr for placeholder images (previously Unsplash).
+3. Directory Structure
+root
+├── app/
+│   ├── home/       # Home page with specific Slider logic
+│   ├── explore/    # Destination discovery with filters
+│   ├── quiz/       # Personality quiz interface
+│   ├── result/     # Quiz results with Radar Chart
+│   ├── my-list/    # Saved favorites page
+│   ├── layout.tsx  # Root layout
+│   └── page.tsx    # Root page (likely redirects or serves as Landing)
+├── lib/
+│   ├── placesData.ts # Data source for attractions
+│   └── quizData.ts   # Data source for questions & personality profiles
+├── components/     # Shared UI components
+└── public/         # Static assets
+4. Key Components & Data
+A. Data Models (lib/)
+Place
+ (placesData.ts)
+
+id: number
+name: string
+region: '北部' | '中部' | '南部' | '東部'
+category: '文化' | '老街' | '自然' | '展覽' | '生活' | '季節主題'
+duration: '1日遊' | '2天1夜' ...
+image: URL string
+description: string
+Quiz (quizData.ts)
+
+Dimensions: OldStreet (巷弄), Nature (自然), Culture (文化), Lifestyle (生活)
+Questions: 4 scenario-based questions mapping answers to dimensions.
+Profiles: Detailed descriptions for each dimension (e.g., "巷弄故事派").
+B. Page Implementations
+1. Home (
+app/home/page.tsx
+)
+Vertical Navigation: Switches between Cities (Taipei, Taichung, etc.).
+Horizontal Navigation: Switches between attractions within a city.
+Visuals: Full-screen background images with fade transitions. Glassmorphism cards for attractions.
+2. Explore (
+app/explore/page.tsx
+)
+Filters: 3 Dropdowns (Region, Category, Duration).
+Listing: Grid of 
+Place
+ cards.
+Interactions: Heart icon to toggle favorites (persisted in localStorage).
+3. Result (
+app/result/page.tsx
+)
+Logic: Calculates scores from URL search params (e.g., ?OldStreet=3&Nature=1).
+Visuals: Recharts Radar Chart showing the user's "Travel DNA".
+Content: Shows matched Persona title, description, and recommended routes.
+5. Design System
+Primary Color: Terracotta (#D97C5F)
+Backgrounds: Warm off-white (#FFF9F2), Dark overlays for hero sections.
+Typography: Sans-serif, clean modern look.
+Effects: Glassmorphism (backdrop-blur), soft shadows, smooth transitions (animate-fade-in).
+6. Current Status & Notes
+Images: All images currently point to loremflickr with specific keywords to avoid 404s.
+Filters: Explore page filters are implemented as dropdowns.
+Responsiveness: Basic responsive grid and flex layouts implemented.
+Navigation: Home page has custom wheel/touch navigation logic.
