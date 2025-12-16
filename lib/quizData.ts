@@ -110,7 +110,7 @@ export const questions: Question[] = [
 ];
 
 export const dimensions: Record<Dimension, string> = {
-  OldStreet: "老街",
+  OldStreet: "巷弄",
   Nature: "自然",
   Culture: "文化",
   Lifestyle: "生活",
@@ -118,33 +118,37 @@ export const dimensions: Record<Dimension, string> = {
 
 export const resultProfiles: Record<
   Dimension,
-  { title: string; description: string; match: string; recommend: string }
+  { title: string; description: string; match: string; recommend: string; tags: string[] }
 > = {
   OldStreet: {
-    title: "老街散策者",
+    title: "巷弄故事派",
     description:
-      "你喜歡在時光的縫隙中尋找故事，斑駁的牆面與古老的建築對你有著致命吸引力。",
+      "你的旅行，是為了閱讀城市未翻完的故事。你總是被窄巷中的舊招牌、斑駁鐵門和手寫字吸引，渴望發掘職人與老店背後的秘密線索。對你而言，最美的風景藏在時間的縫隙裡。",
     match: "北部 老街散策線",
     recommend: "南部 市場生活線",
+    tags: ['#歷史底蘊', '#慢步調', '#沉浸探索', '#秘密線索'],
   },
   Nature: {
-    title: "自然系旅人",
-    description: "山海是你最好的充電站，遠離塵囂、擁抱自然是你旅行的意義。",
+    title: "自然觀察派",
+    description: "你的旅行，是與大自然同步的節奏練習。你總是被遠方的山稜線、清晰的風聲和寬闊的視野吸引，偏好讓體力帶領你前行。你期待與山海展開一場充滿深呼吸的對話。",
     match: "東部 山海療癒線",
     recommend: "中部 森林秘境線",
+    tags: ['#山海景觀', '# 風向感知', '#戶外充電', '#自然療癒'],
   },
   Culture: {
-    title: "文化探索家",
+    title: "文化知識派",
     description:
-      "你渴望深入了解當地的歷史與靈魂，博物館、美術館與古蹟是你必訪之地。",
+      "你的旅行，是對知識能量的追尋。你習慣用知識打開理解城市的大門，熱衷於冷靜的光線、玻璃帷幕後的策展空間。你喜歡在半天內，讓知識在博物館中迅速充電。",
     match: "中部 文化巡禮線",
     recommend: "北部 城市藝文線",
+    tags: ['#藝術鑑賞', '#知識導向', '#場館沉浸', '#系統探索'],
   },
   Lifestyle: {
     title: "地方生活派",
     description:
-      "The Local Pulse Seeker. 你想融入當地人的日常，市場、小吃與人情味是你觀察生活的窗口。",
+      "你的旅行，是為了感受城市最真實的脈搏。你渴望被攤販的蒸氣與吆喝聲包圍，偏好到市場或街區觀察人群。對你而言，最好的旅行，是把自己交給當地人沒有包裝的日常節奏。",
     match: "南部 市場生活線",
     recommend: "北部 老街散策線",
+    tags: ['#美食導向', '#人群觀察', '#充滿溫度', '#市場尋寶'],
   },
 };
