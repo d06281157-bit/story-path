@@ -6,21 +6,24 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/home" className="flex items-center gap-3 group">
           {/* Logo Image */}
-          <img 
-            src="/icon-LOGO.png" 
-            alt="Wanderly Logo" 
-            className="h-8 w-auto object-contain" 
+          <img
+            src="/icon-LOGO.png"
+            alt="Wanderly Logo"
+            className="h-8 w-auto object-contain"
           />
           {/* Brand Text */}
           <span className="font-serif font-bold text-xl tracking-wide text-gray-800">Wanderly</span>
         </Link>
-        
+
         <div className="flex items-center gap-8 text-sm font-medium text-gray-500">
           <Link href="/" className="hover:text-terracotta transition-colors">
             Quiz
           </Link>
           <Link href="/explore" className="hover:text-terracotta transition-colors">
             Explore
+          </Link>
+          <Link href="/plan" className="hover:text-terracotta transition-colors">
+            Plan
           </Link>
           {/* Updated Link: My List */}
           <Link href="/my-list" className="hover:text-terracotta transition-colors">
