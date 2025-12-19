@@ -20,15 +20,15 @@ interface PageProps {
 
 const getHighlights = (category: string) => {
     switch (category) {
-        case '文化':
+        case '城市文化':
             return ['Historical Architecture', 'Local Stories & Legends', 'Guided Heritage Tour'];
-        case '老街':
+        case '老街散策':
             return ['Traditional Snacks', 'Old Street Atmosphere', 'Handicraft Shopping'];
-        case '自然':
+        case '戶外自然':
             return ['Scenic Hiking Trails', 'Breathtaking Views', 'Ecological Discovery'];
-        case '展覽':
+        case '展覽文化':
             return ['Art Installations', 'Interactive Exhibits', 'Creative Workshops'];
-        case '生活':
+        case '市場生活':
             return ['Local Market Experience', 'Hidden Gems', 'Authentic Daily Life'];
         case '季節主題':
             return ['Seasonal Festivals', 'Limited Time Events', 'Crowd Favorites'];
@@ -37,25 +37,27 @@ const getHighlights = (category: string) => {
     }
 };
 
-const getGalleryImages = (name: string) => {
-    // Generate 3 unique URLs based on the place name to simulate a gallery
-    return [
-        `https://loremflickr.com/800/600/${name.split(' ')[0]},scene/all`,
-        `https://loremflickr.com/800/600/${name.split(' ')[0]},detail/all`,
-        `https://loremflickr.com/800/600/${name.split(' ')[0]},view/all`,
-    ];
+const getGalleryImages = (id: string, count: number) => {
+    // Return all local images available for this route
+    // count is typically 4
+    const images = [];
+    for (let i = 1; i <= count; i++) {
+        images.push(`/images/itineraries/${id}-${i}.jpg`);
+    }
+    return images;
 };
 
 export default async function PlaceDetailPage({ params }: PageProps) {
     const { id } = await params;
-    const place = places.find((p) => p.id === Number(id));
+    const place = places.find((p) => p.id === id);
 
     if (!place) {
         notFound();
     }
 
     const highlights = getHighlights(place.category);
-    const galleryImages = getGalleryImages(place.name || 'taiwan');
+    const galleryImages = getGalleryImages(place.id, place.imageCount);
+    const mainImage = galleryImages[0];
 
     return (
         <div className="flex-1 flex flex-col bg-white animate-fade-in min-h-screen relative">
@@ -63,7 +65,7 @@ export default async function PlaceDetailPage({ params }: PageProps) {
             {/* --- Section A: Hero Image --- */}
             <div className="relative h-[50vh] w-full">
                 <Image
-                    src={place.image}
+                    src={mainImage}
                     alt={place.name}
                     fill
                     className="object-cover"
@@ -140,7 +142,7 @@ export default async function PlaceDetailPage({ params }: PageProps) {
                     <div className="border-t border-gray-100 pt-8">
                         <h2 className="text-2xl font-bold text-gray-900 mb-6 font-serif">Gallery</h2>
                         <div className="grid grid-cols-3 gap-4 h-48 md:h-64">
-                            {galleryImages.map((img, idx) => (
+                            {galleryImages.slice(1).map((img, idx) => ( // Skip first as it is hero
                                 <div key={idx} className="relative w-full h-full rounded-lg overflow-hidden group">
                                     <Image
                                         src={img}
@@ -170,7 +172,7 @@ export default async function PlaceDetailPage({ params }: PageProps) {
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-400 uppercase font-bold">Duration</p>
-                                    <p className="text-gray-800 font-medium">{place.duration}</p>
+                                    <p className="text-gray-800 font-medium">{place.duration || '1 Day'}</p>
                                 </div>
                             </div>
 

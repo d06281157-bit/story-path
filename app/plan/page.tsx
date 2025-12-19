@@ -421,8 +421,8 @@ export default function PlannerPage() {
                                     key={b.id}
                                     onClick={() => setBudget(b.id)}
                                     className={`flex flex-col items-center justify-center h-24 rounded-xl border transition-all cursor-pointer shadow-sm px-2 text-center ${budget === b.id
-                                            ? 'bg-[#D97C5F]/5 border-[#D97C5F] text-[#D97C5F] ring-1 ring-[#D97C5F]'
-                                            : 'bg-white border-stone-200 text-gray-400 hover:border-[#D97C5F]/50'
+                                        ? 'bg-[#D97C5F]/5 border-[#D97C5F] text-[#D97C5F] ring-1 ring-[#D97C5F]'
+                                        : 'bg-white border-stone-200 text-gray-400 hover:border-[#D97C5F]/50'
                                         }`}
                                 >
                                     <b.icon size={20} className="mb-2" />
@@ -450,68 +450,68 @@ export default function PlannerPage() {
         <div className="min-h-screen bg-[#FFF9F2] animate-fade-in text-[#2C1810]">
 
             {/* Integrated Header */}
-            <div className="bg-[#5A3E36] text-[#FFF9F2] px-6 py-10 md:py-12 shadow-lg relative overflow-hidden">
+            <div className="bg-gradient-to-br from-[#F5E6DA] to-[#F5E6DA] px-6 py-12 md:py-16 border-b border-[#5A3E36]/5 relative overflow-hidden">
                 <div className="max-w-6xl mx-auto relative z-10">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
                         <div>
-                            <h2 className="text-3xl md:text-4xl font-bold mb-2 font-serif">您的專屬旅程</h2>
-                            <p className="text-white/80 text-sm md:text-base">
+                            <h2 className="text-3xl md:text-4xl font-extrabold text-[#5A3E36] mb-3 font-serif">您的專屬旅程</h2>
+                            <p className="text-[#5A3E36]/80 text-sm md:text-base max-w-2xl leading-relaxed">
                                 這是一趟舒適的旅程，專為喜愛 {themes.length > 0 ? themes.map(tId => THEMES.find(t => t.id === tId)?.label).join('、') : '旅行'} 的您設計。
                             </p>
                         </div>
                         <button
                             onClick={() => { setItinerary([]); setStep('input'); }}
-                            className="px-5 py-2 bg-white/10 border border-white/30 rounded-full hover:bg-white/20 transition flex items-center gap-2 text-sm backdrop-blur-md"
+                            className="px-6 py-2.5 bg-[#5A3E36] text-white rounded-full hover:bg-[#4A3728] transition-all flex items-center gap-2 text-sm shadow-md group"
                         >
-                            <RefreshCw size={16} /> 重新規劃
+                            <RefreshCw size={16} className="group-hover:rotate-180 transition-transform duration-500" /> 重新規劃
                         </button>
                     </div>
 
-                    {/* Trip Overview Grid (5 Items) */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 bg-white/5 rounded-2xl p-6 backdrop-blur-sm border border-white/10">
+                    {/* Trip Overview Grid - Softened */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 bg-white/40 rounded-[2rem] p-8 backdrop-blur-md border border-white/60 shadow-sm">
 
                         {/* 1. Location */}
-                        <div className="flex flex-col gap-1">
-                            <span className="text-[10px] uppercase tracking-wider text-white/50">目的地</span>
-                            <div className="flex items-center gap-2 text-lg font-semibold">
-                                <MapPin size={18} className="text-[#D97C5F]" />
+                        <div className="flex flex-col gap-2">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#5A3E36]/50">目的地</span>
+                            <div className="flex items-center gap-3 text-lg font-bold text-[#5A3E36]">
+                                <MapPin size={20} className="text-[#D97C5F] opacity-90" />
                                 {location || "探索台灣"}
                             </div>
                         </div>
 
                         {/* 2. Duration */}
-                        <div className="flex flex-col gap-1">
-                            <span className="text-[10px] uppercase tracking-wider text-white/50">旅遊天數</span>
-                            <div className="flex items-center gap-2 text-lg font-semibold">
-                                <Calendar size={18} className="text-[#D97C5F]" />
+                        <div className="flex flex-col gap-2">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#5A3E36]/50">旅遊天數</span>
+                            <div className="flex items-center gap-3 text-lg font-bold text-[#5A3E36]">
+                                <Calendar size={20} className="text-[#D97C5F] opacity-90" />
                                 {duration} 天
                             </div>
                         </div>
 
                         {/* 3. Companions */}
-                        <div className="flex flex-col gap-1">
-                            <span className="text-[10px] uppercase tracking-wider text-white/50">旅伴</span>
-                            <div className="flex items-center gap-2 text-lg font-semibold">
-                                <Users size={18} className="text-[#D97C5F]" />
+                        <div className="flex flex-col gap-2">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#5A3E36]/50">旅伴</span>
+                            <div className="flex items-center gap-3 text-lg font-bold text-[#5A3E36]">
+                                <Users size={20} className="text-[#D97C5F] opacity-90" />
                                 {COMPANION_OPTIONS.find(c => c.id === companion)?.label}
                             </div>
                         </div>
 
                         {/* 4. Budget */}
-                        <div className="flex flex-col gap-1">
-                            <span className="text-[10px] uppercase tracking-wider text-white/50">預算/風格</span>
-                            <div className="flex items-center gap-2 text-lg font-semibold">
-                                <Wallet size={18} className="text-[#D97C5F]" />
+                        <div className="flex flex-col gap-2">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#5A3E36]/50">預算/風格</span>
+                            <div className="flex items-center gap-3 text-lg font-bold text-[#5A3E36]">
+                                <Wallet size={20} className="text-[#D97C5F] opacity-90" />
                                 {budget === 1 ? '經濟實惠' : budget === 3 ? '精緻奢華' : '經典標準'}
                             </div>
                         </div>
 
-                        {/* 5. Travel Style (New!) */}
-                        <div className="flex flex-col gap-1 col-span-2 md:col-span-1">
-                            <span className="text-[10px] uppercase tracking-wider text-white/50">旅遊偏好</span>
-                            <div className="flex flex-wrap gap-1 mt-1">
+                        {/* 5. Travel Style */}
+                        <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#5A3E36]/50">旅遊偏好</span>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
                                 {themes.map(t => (
-                                    <span key={t} className="px-2 py-0.5 bg-white/20 border border-white/10 text-white text-xs rounded-full whitespace-nowrap">
+                                    <span key={t} className="px-2.5 py-1 bg-[#D97C5F]/10 border border-[#D97C5F]/20 text-[#D97C5F] text-[10px] font-bold rounded-lg whitespace-nowrap">
                                         {THEMES.find(opt => opt.id === t)?.label}
                                     </span>
                                 ))}
@@ -521,11 +521,10 @@ export default function PlannerPage() {
                     </div>
                 </div>
 
-                {/* Decor */}
-                <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/3 w-96 h-96 bg-[#D97C5F]/20 rounded-full blur-3xl pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-64 h-64 bg-[#2C1810]/40 rounded-full blur-3xl pointer-events-none"></div>
+                {/* Decor (Subtler) */}
+                <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/3 w-96 h-96 bg-white/40 rounded-full blur-3xl pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-64 h-64 bg-[#D97C5F]/5 rounded-full blur-3xl pointer-events-none"></div>
             </div>
-
             {/* Timeline */}
             <main className="max-w-4xl mx-auto px-4 py-8 md:py-12 space-y-12 pb-32">
                 {itinerary.map((day) => (
@@ -560,8 +559,8 @@ export default function PlannerPage() {
                                         <div className="flex-1 min-w-0 py-1">
                                             <div className="flex justify-between items-start mb-1">
                                                 <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.place.type === 'food'
-                                                        ? 'bg-orange-50 text-orange-600 border-orange-100'
-                                                        : 'bg-stone-50 text-stone-500 border-stone-100'
+                                                    ? 'bg-orange-50 text-orange-600 border-orange-100'
+                                                    : 'bg-stone-50 text-stone-500 border-stone-100'
                                                     }`}>
                                                     {item.time}
                                                 </span>
