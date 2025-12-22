@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -70,8 +71,7 @@ const placesPool: PlaceData[] = [
     { id: 320, name: '奇美博物館', city: '台南', district: '仁德區', region: '南部', category: '文化', tags: ['文化', '藝術', '攝影'], type: 'spot', price: 2, bestTime: 'day', image: 'https://loremflickr.com/800/600/museum,white', description: '歐式宮殿與豐富館藏。' },
     { id: 322, name: '花園夜市', city: '台南', district: '北區', region: '南部', category: '美食', tags: ['美食', '夜市'], type: 'food', price: 1, bestTime: 'night', image: 'https://loremflickr.com/800/600/nightmarket,banner', description: '南部最大夜市，美食聚集。' },
 
-    // --- 高雄 (Kaohsiung) [Enriched as Requested] ---
-    // Shopping / Malls
+    // --- 高雄 (Kaohsiung) ---
     { id: 420, name: '夢時代購物中心', city: '高雄', district: '前鎮區', region: '南部', category: '購物', tags: ['購物', '美食', '親子'], type: 'spot', price: 2, bestTime: 'any', image: 'https://loremflickr.com/800/600/mall,dreammall', description: '結合購物、美食與摩天輪的大型廣場。' },
     { id: 421, name: '漢神巨蛋', city: '高雄', district: '左營區', region: '南部', category: '購物', tags: ['購物', '美食', '時尚'], type: 'spot', price: 2, bestTime: 'any', image: 'https://loremflickr.com/800/600/mall,shopping', description: '北高雄最熱鬧的時尚地標。' },
     { id: 422, name: '新堀江商圈', city: '高雄', district: '新興區', region: '南部', category: '購物', tags: ['購物', '美食', '潮流'], type: 'spot', price: 1, bestTime: 'any', image: 'https://loremflickr.com/800/600/street,fashion', description: '高雄的西門町，年輕潮流聚集地。' },
@@ -99,7 +99,7 @@ const placesPool: PlaceData[] = [
 type Companion = 'Solo' | 'Couple' | 'Family' | 'Friends';
 type Pace = 'Slow' | 'Balanced' | 'Fast';
 type Theme = 'Culture' | 'Food' | 'Nature' | 'Shopping' | 'Adventure' | 'Relaxation' | 'Photography' | 'History';
-type Budget = 1 | 2 | 3; // New Type
+type Budget = 1 | 2 | 3;
 
 interface TripItem {
     time: string;
@@ -142,8 +142,21 @@ const BUDGET_OPTIONS: { id: Budget; title: string; desc: string; icon: any }[] =
     { id: 3, title: '精緻奢華', desc: '精緻料理、舒適享受', icon: Sparkles },
 ];
 
-// --- 3. Component ---
+// --- 3. Component Wrapper for Suspense ---
 export default function PlannerPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#FFF9F2] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#D97C5F]"></div>
+            </div>
+        }>
+            <PlannerContent />
+        </Suspense>
+    );
+}
+
+function PlannerContent() {
+    const searchParams = useSearchParams();
     const [step, setStep] = useState<'input' | 'result'>('input');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -161,6 +174,35 @@ export default function PlannerPage() {
 
     // Result
     const [itinerary, setItinerary] = useState<ItineraryDay[]>([]);
+    const [isSaved, setIsSaved] = useState(false);
+
+    // Deep Load Effect (Handling ?planId=...)
+    useEffect(() => {
+        const planId = searchParams.get('planId');
+        if (planId) {
+            const savedPlans = JSON.parse(localStorage.getItem('my-custom-plans') || '[]');
+            const plan = savedPlans.find((p: any) => p.id === planId);
+
+            if (plan) {
+                setLocation(plan.location);
+                setDuration(plan.duration);
+                setItinerary(plan.itinerary);
+                setIsSaved(true);
+
+                // Map Companion label back to ID
+                const compOpt = COMPANION_OPTIONS.find(o => o.label === plan.companion);
+                if (compOpt) setCompanion(compOpt.id);
+
+                // Map Theme labels back to IDs
+                const themeIds = plan.themes?.map((label: string) =>
+                    THEMES.find(t => t.label === label)?.id
+                ).filter(Boolean) as Theme[];
+                setThemes(themeIds);
+
+                setStep('result');
+            }
+        }
+    }, [searchParams]);
 
     // --- Helpers ---
     const toggleTheme = (theme: Theme) => {
@@ -182,12 +224,11 @@ export default function PlannerPage() {
         if (lower.match(/taipei|台北/)) return { type: 'city', value: '台北' };
         if (lower.match(/tainan|台南/)) return { type: 'city', value: '台南' };
         if (lower.match(/kaohsiung|高雄/)) return { type: 'city', value: '高雄' };
-        return { type: 'city', value: '台北' }; // Default fallback if needed, but logic covers filters
+        return { type: 'city', value: '台北' };
     };
 
-    // --- Weighted Scoring Algorithm (Phase 49) ---
+    // --- Weighted Scoring Algorithm ---
     const generateItinerary = () => {
-        // VALIDATION
         if (!location.trim()) {
             triggerToast('請輸入想去的城市 (例如：台北、台南)');
             return;
@@ -198,107 +239,72 @@ export default function PlannerPage() {
         }
 
         setIsLoading(true);
+        setIsSaved(false);
 
         setTimeout(() => {
             const parsedLoc = parseLocationStr(location);
             const targetCity = parsedLoc.value;
 
-            // 1. Filter by City (Strict) & Basic Availability
             let cityPool = placesPool.filter(p => !targetCity || p.city === targetCity);
-            if (cityPool.length === 0) cityPool = placesPool.filter(p => p.region === '北部'); // Ultimate fallback
+            if (cityPool.length === 0) cityPool = placesPool.filter(p => p.region === '北部');
 
-            // 2. Score Items based on User Interests
             interface ScoredPlace extends PlaceData {
                 score: number;
             }
 
             const scoredPool: ScoredPlace[] = cityPool.map(place => {
                 let score = 0;
-                // Hit Interest (Tag match)
                 const interestMatch = themes.some(t => {
-                    const themeLabel = THEMES.find(th => th.id === t)?.label; // e.g., 'Shopping' -> '購物'
+                    const themeLabel = THEMES.find(th => th.id === t)?.label;
                     return place.tags.includes(themeLabel || '');
                 });
                 if (interestMatch) score += 10;
-
-                // Specific Boosts
                 if (themes.includes('Shopping') && place.tags.includes('購物')) score += 5;
                 if (themes.includes('Food') && place.tags.includes('美食')) score += 5;
-
-                // Budget Match
                 if (place.price === budget) score += 2;
-
-                // Diversity shuffle factor to break ties
                 score += Math.random() * 2;
-
                 return { ...place, score };
-            }).sort((a, b) => b.score - a.score); // Best matches first
+            }).sort((a, b) => b.score - a.score);
 
             const days: ItineraryDay[] = [];
-            const usedIds = new Set<number>(); // Global tracking to prevent duplicates across ALL days
-
+            const usedIds = new Set<number>();
             let currentDistrict = '';
 
             for (let d = 1; d <= duration; d++) {
                 const dailyActivities: TripItem[] = [];
-
-                // Helper to pick best available spot
                 const pickSpot = (slotType: 'spot' | 'food', timeSlot: 'day' | 'night' | 'any') => {
-                    // Filter candidates that are NOT used
                     let candidates = scoredPool.filter(p => !usedIds.has(p.id));
-
-                    // Filter by Time
                     if (timeSlot === 'night') {
-                        // For night slot, must accept 'night' OR 'any'
                         candidates = candidates.filter(p => p.bestTime === 'night' || p.bestTime === 'any');
                     } else {
-                        // For day slot, strictly NO 'night' exclusive spots (like night markets)
                         candidates = candidates.filter(p => p.bestTime !== 'night');
                     }
-
-                    // Filter by Type
                     candidates = candidates.filter(p => p.type === slotType);
-
                     if (candidates.length === 0) return null;
-
-                    // Attempt 1: Same District + High Score (Threshold check)
                     let bestMatch = candidates.find(p => p.district === currentDistrict);
-
-                    // Attempt 2: Global Best (Switching District)
                     if (!bestMatch) {
-                        bestMatch = candidates[0]; // Already sorted by score
+                        bestMatch = candidates[0];
                     } else {
-                        // Quality Check: If the district match is trash (score < 5) and we have a god-tier match (score > 12) elsewhere, switch?
                         if (bestMatch.score < 5 && candidates[0].score > 10) {
                             bestMatch = candidates[0];
                         }
                     }
-
                     if (bestMatch) {
                         usedIds.add(bestMatch.id);
-                        currentDistrict = bestMatch.district; // Move logic to this new district
+                        currentDistrict = bestMatch.district;
                         return bestMatch;
                     }
                     return null;
                 };
 
-                // --- MORNING (Spot) ---
                 const morning = pickSpot('spot', 'day');
                 if (morning) dailyActivities.push({ time: '上午', place: morning, reason: '前往探索' });
-
-                // --- LUNCH (Food) ---
                 const lunch = pickSpot('food', 'day');
                 if (lunch) dailyActivities.push({ time: '午餐', place: lunch, reason: '享用美食' });
-
-                // --- AFTERNOON (Spot) ---
                 const afternoon = pickSpot('spot', 'day');
                 if (afternoon) dailyActivities.push({ time: '下午', place: afternoon, reason: '午後散策' });
-
-                // --- DINNER (Food) ---
-                const dinner = pickSpot('food', 'night'); // Can hold night markets if budget fits or if highly rated
+                const dinner = pickSpot('food', 'night');
                 if (dinner) dailyActivities.push({ time: '晚餐', place: dinner, reason: '美味晚餐' });
-
-                // --- EVENING (Spot/Activity) ---
                 const evening = pickSpot('spot', 'night');
                 if (evening) dailyActivities.push({ time: '晚上', place: evening, reason: '夜間活動' });
 
@@ -313,57 +319,65 @@ export default function PlannerPage() {
         }, 1500);
     };
 
-    // --- View: Input Form ---
+    const saveToMyList = () => {
+        if (isSaved) return;
+        const planId = `plan-${Date.now()}`;
+        const newPlan = {
+            id: planId,
+            createdAt: new Date().toISOString(),
+            location: location || "探索台灣",
+            duration: duration,
+            companion: COMPANION_OPTIONS.find(c => c.id === companion)?.label,
+            themes: themes.map(tId => THEMES.find(t => t.id === tId)?.label),
+            itinerary: itinerary
+        };
+        const existingPlans = JSON.parse(localStorage.getItem('my-custom-plans') || '[]');
+        localStorage.setItem('my-custom-plans', JSON.stringify([newPlan, ...existingPlans]));
+        setIsSaved(true);
+        triggerToast('已成功收藏至我的收藏清單！');
+    };
+
+    const Toast = () => (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] animate-bounce-in">
+            <div className="bg-[#2C1810] text-[#FFF9F2] px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-4 border border-[#D97C5F]/30 backdrop-blur-xl">
+                <div className="w-8 h-8 rounded-full bg-[#D97C5F]/20 flex items-center justify-center">
+                    <Heart size={16} className="text-[#D97C5F] fill-current" />
+                </div>
+                <div className="flex flex-col">
+                    <span className="font-bold text-sm tracking-wide">{toastMessage}</span>
+                    <Link href="/my-list" className="text-[10px] text-[#D97C5F] font-bold underline underline-offset-2 hover:text-[#D97C5F]/80 transition-colors">
+                        點此查看收藏
+                    </Link>
+                </div>
+                <button onClick={() => setShowToast(false)} className="ml-2 text-stone-500 hover:text-white transition-colors">
+                    <X size={16} />
+                </button>
+            </div>
+        </div>
+    );
+
     if (step === 'input') {
         return (
             <div className="min-h-screen bg-[#FFF9F2] py-8 px-4 animate-fade-in font-sans text-[#2C1810] flex items-center justify-center relative">
-
-                {/* TOAST NOTIFICATION */}
-                {showToast && (
-                    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-bounce-in">
-                        <div className="bg-[#2C1810] text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-[#D97C5F]">
-                            <AlertCircle size={20} className="text-[#D97C5F]" />
-                            <span className="font-bold text-sm tracking-wide">{toastMessage}</span>
-                            <button onClick={() => setShowToast(false)} className="text-white/50 hover:text-white transition-colors">
-                                <X size={16} />
-                            </button>
-                        </div>
-                    </div>
-                )}
-
+                {showToast && <Toast />}
                 {isLoading && (
                     <div className="fixed inset-0 bg-white/80 backdrop-blur-md z-50 flex flex-col items-center justify-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#D97C5F] mb-6"></div>
                         <p className="text-[#D97C5F] font-serif text-2xl font-bold animate-pulse">AI 智慧路徑運算中...</p>
                     </div>
                 )}
-
                 <div className="max-w-xl w-full mx-auto space-y-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-stone-100 p-6 md:p-8 transform transition-all hover:shadow-2xl">
                     <div className="text-left mb-8">
-                        <h1 className="text-3xl font-black tracking-tight text-[#2C1810] font-serif mb-1">
-                            AI 智慧行程規劃
-                        </h1>
-                        <p className="text-sm text-gray-500 font-medium">
-                            告訴我們您的喜好，為您量身打造專屬的台灣之旅。
-                        </p>
+                        <h1 className="text-3xl font-black tracking-tight text-[#2C1810] font-serif mb-1">AI 智慧行程規劃</h1>
+                        <p className="text-sm text-gray-500 font-medium">告訴我們您的喜好，為您量身打造專屬的台灣之旅。</p>
                     </div>
-
-                    {/* Step 1: Location */}
                     <div className="space-y-3">
                         <label className="text-xs font-bold uppercase tracking-wider text-gray-400 ml-1">想去哪裡玩？</label>
                         <div className="relative group">
-                            <input
-                                type="text"
-                                placeholder="例如：台北、台南、高雄..."
-                                value={location}
-                                onChange={(e) => setLocation(e.target.value)}
-                                className="w-full bg-white rounded-xl h-12 px-4 pl-10 text-sm font-bold outline-none border border-stone-200 shadow-sm focus:ring-2 focus:ring-[#D97C5F]/50 focus:border-[#D97C5F] transition-all placeholder:font-normal placeholder:text-gray-300 hover:border-[#D97C5F]/30"
-                            />
+                            <input type="text" placeholder="例如：台北、台南、高雄..." value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-white rounded-xl h-12 px-4 pl-10 text-sm font-bold outline-none border border-stone-200 shadow-sm focus:ring-2 focus:ring-[#D97C5F]/50 focus:border-[#D97C5F] transition-all placeholder:font-normal placeholder:text-gray-300 hover:border-[#D97C5F]/30" />
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none group-focus-within:text-[#D97C5F] transition-colors" />
                         </div>
                     </div>
-
-                    {/* Step 2: Duration */}
                     <div className="space-y-4 pt-2">
                         <div className="flex justify-between items-center px-1">
                             <label className="text-xs font-bold uppercase tracking-wider text-gray-400">旅遊天數</label>
@@ -371,8 +385,6 @@ export default function PlannerPage() {
                         </div>
                         <input type="range" min="1" max="5" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full h-2 bg-stone-200 rounded-full cursor-pointer accent-[#D97C5F]" />
                     </div>
-
-                    {/* Step 3: Pace */}
                     <div className="space-y-3 pt-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-gray-400 ml-1">旅遊步調</label>
                         <div className="grid grid-cols-3 gap-3">
@@ -383,8 +395,6 @@ export default function PlannerPage() {
                             ))}
                         </div>
                     </div>
-
-                    {/* Step 4: Companions */}
                     <div className="space-y-3 pt-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-gray-400 ml-1">旅伴是誰？</label>
                         <div className="grid grid-cols-4 gap-3">
@@ -396,8 +406,6 @@ export default function PlannerPage() {
                             ))}
                         </div>
                     </div>
-
-                    {/* Step 5: Interests */}
                     <div className="space-y-3 pt-2">
                         <div className="flex justify-between px-1">
                             <label className="text-xs font-bold uppercase tracking-wider text-gray-400">旅遊風格 (最多3項)</label>
@@ -411,20 +419,11 @@ export default function PlannerPage() {
                             ))}
                         </div>
                     </div>
-
-                    {/* Step 6: Budget */}
                     <div className="space-y-3 pt-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-gray-400 ml-1">預算與飲食風格</label>
                         <div className="grid grid-cols-3 gap-3">
                             {BUDGET_OPTIONS.map(b => (
-                                <button
-                                    key={b.id}
-                                    onClick={() => setBudget(b.id)}
-                                    className={`flex flex-col items-center justify-center h-24 rounded-xl border transition-all cursor-pointer shadow-sm px-2 text-center ${budget === b.id
-                                        ? 'bg-[#D97C5F]/5 border-[#D97C5F] text-[#D97C5F] ring-1 ring-[#D97C5F]'
-                                        : 'bg-white border-stone-200 text-gray-400 hover:border-[#D97C5F]/50'
-                                        }`}
-                                >
+                                <button key={b.id} onClick={() => setBudget(b.id)} className={`flex flex-col items-center justify-center h-24 rounded-xl border transition-all cursor-pointer shadow-sm px-2 text-center ${budget === b.id ? 'bg-[#D97C5F]/5 border-[#D97C5F] text-[#D97C5F] ring-1 ring-[#D97C5F]' : 'bg-white border-stone-200 text-gray-400 hover:border-[#D97C5F]/50'}`}>
                                     <b.icon size={20} className="mb-2" />
                                     <span className="text-xs font-bold mb-1">{b.title}</span>
                                     <span className="text-[9px] opacity-70 leading-tight">{b.desc}</span>
@@ -432,24 +431,20 @@ export default function PlannerPage() {
                             ))}
                         </div>
                     </div>
-
                     <div className="pt-4">
                         <button onClick={generateItinerary} className="w-full bg-[#2C1810] text-[#FFF9F2] text-sm font-bold py-4 rounded-xl shadow-lg hover:bg-black transition-all flex items-center justify-center gap-2">
                             <span>開始規劃行程</span>
                             <ArrowRight size={16} />
                         </button>
                     </div>
-
                 </div>
             </div>
         );
     }
 
-    // --- View: Result ---
     return (
         <div className="min-h-screen bg-[#FFF9F2] animate-fade-in text-[#2C1810]">
-
-            {/* Integrated Header */}
+            {showToast && <Toast />}
             <div className="bg-gradient-to-br from-[#F5E6DA] to-[#F5E6DA] px-6 py-12 md:py-16 border-b border-[#5A3E36]/5 relative overflow-hidden">
                 <div className="max-w-6xl mx-auto relative z-10">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
@@ -459,118 +454,70 @@ export default function PlannerPage() {
                                 這是一趟舒適的旅程，專為喜愛 {themes.length > 0 ? themes.map(tId => THEMES.find(t => t.id === tId)?.label).join('、') : '旅行'} 的您設計。
                             </p>
                         </div>
-                        <button
-                            onClick={() => { setItinerary([]); setStep('input'); }}
-                            className="px-6 py-2.5 bg-[#5A3E36] text-white rounded-full hover:bg-[#4A3728] transition-all flex items-center gap-2 text-sm shadow-md group"
-                        >
-                            <RefreshCw size={16} className="group-hover:rotate-180 transition-transform duration-500" /> 重新規劃
-                        </button>
+                        <div className="flex gap-3">
+                            <button onClick={saveToMyList} disabled={isSaved} className={`px-6 py-2.5 rounded-full transition-all flex items-center gap-2 text-sm shadow-md font-bold ${isSaved ? 'bg-white text-[#D97C5F] border border-[#D97C5F]/20 cursor-default' : 'bg-[#D97C5F] text-white hover:bg-[#b05a40]'}`}>
+                                <Heart size={16} className={isSaved ? 'fill-current' : ''} />
+                                {isSaved ? '已收藏到我的清單' : '收藏此行程'}
+                            </button>
+                            <button onClick={() => { setItinerary([]); setStep('input'); }} className="px-6 py-2.5 bg-[#5A3E36] text-white rounded-full hover:bg-[#4A3728] transition-all flex items-center gap-2 text-sm shadow-md group font-bold">
+                                <RefreshCw size={16} className="group-hover:rotate-180 transition-transform duration-500" /> 重新規劃
+                            </button>
+                        </div>
                     </div>
-
-                    {/* Trip Overview Grid - Softened */}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 bg-white/40 rounded-[2rem] p-8 backdrop-blur-md border border-white/60 shadow-sm">
-
-                        {/* 1. Location */}
                         <div className="flex flex-col gap-2">
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#5A3E36]/50">目的地</span>
-                            <div className="flex items-center gap-3 text-lg font-bold text-[#5A3E36]">
-                                <MapPin size={20} className="text-[#D97C5F] opacity-90" />
-                                {location || "探索台灣"}
-                            </div>
+                            <div className="flex items-center gap-3 text-lg font-bold text-[#5A3E36]"><MapPin size={20} className="text-[#D97C5F] opacity-90" />{location || "探索台灣"}</div>
                         </div>
-
-                        {/* 2. Duration */}
                         <div className="flex flex-col gap-2">
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#5A3E36]/50">旅遊天數</span>
-                            <div className="flex items-center gap-3 text-lg font-bold text-[#5A3E36]">
-                                <Calendar size={20} className="text-[#D97C5F] opacity-90" />
-                                {duration} 天
-                            </div>
+                            <div className="flex items-center gap-3 text-lg font-bold text-[#5A3E36]"><Calendar size={20} className="text-[#D97C5F] opacity-90" />{duration} 天</div>
                         </div>
-
-                        {/* 3. Companions */}
                         <div className="flex flex-col gap-2">
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#5A3E36]/50">旅伴</span>
-                            <div className="flex items-center gap-3 text-lg font-bold text-[#5A3E36]">
-                                <Users size={20} className="text-[#D97C5F] opacity-90" />
-                                {COMPANION_OPTIONS.find(c => c.id === companion)?.label}
-                            </div>
+                            <div className="flex items-center gap-3 text-lg font-bold text-[#5A3E36]"><Users size={20} className="text-[#D97C5F] opacity-90" />{COMPANION_OPTIONS.find(c => c.id === companion)?.label}</div>
                         </div>
-
-                        {/* 4. Budget */}
                         <div className="flex flex-col gap-2">
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#5A3E36]/50">預算/風格</span>
-                            <div className="flex items-center gap-3 text-lg font-bold text-[#5A3E36]">
-                                <Wallet size={20} className="text-[#D97C5F] opacity-90" />
-                                {budget === 1 ? '經濟實惠' : budget === 3 ? '精緻奢華' : '經典標準'}
-                            </div>
+                            <div className="flex items-center gap-3 text-lg font-bold text-[#5A3E36]"><Wallet size={20} className="text-[#D97C5F] opacity-90" />{budget === 1 ? '經濟實惠' : budget === 3 ? '精緻奢華' : '經典標準'}</div>
                         </div>
-
-                        {/* 5. Travel Style */}
                         <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#5A3E36]/50">旅遊偏好</span>
                             <div className="flex flex-wrap gap-1.5 mt-1">
                                 {themes.map(t => (
-                                    <span key={t} className="px-2.5 py-1 bg-[#D97C5F]/10 border border-[#D97C5F]/20 text-[#D97C5F] text-[10px] font-bold rounded-lg whitespace-nowrap">
-                                        {THEMES.find(opt => opt.id === t)?.label}
-                                    </span>
+                                    <span key={t} className="px-2.5 py-1 bg-[#D97C5F]/10 border border-[#D97C5F]/20 text-[#D97C5F] text-[10px] font-bold rounded-lg whitespace-nowrap">{THEMES.find(opt => opt.id === t)?.label}</span>
                                 ))}
                             </div>
                         </div>
-
                     </div>
                 </div>
-
-                {/* Decor (Subtler) */}
                 <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/3 w-96 h-96 bg-white/40 rounded-full blur-3xl pointer-events-none"></div>
                 <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-64 h-64 bg-[#D97C5F]/5 rounded-full blur-3xl pointer-events-none"></div>
             </div>
-            {/* Timeline */}
             <main className="max-w-4xl mx-auto px-4 py-8 md:py-12 space-y-12 pb-32">
                 {itinerary.map((day) => (
                     <div key={day.day} className="relative">
                         <div className="sticky top-4 z-30 mb-5 inline-block">
-                            <span className="bg-[#D97C5F] text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow-lg shadow-[#D97C5F]/30 font-serif border-2 border-white/20">
-                                第 {day.day} 天
-                            </span>
+                            <span className="bg-[#D97C5F] text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow-lg shadow-[#D97C5F]/30 font-serif border-2 border-white/20">第 {day.day} 天</span>
                         </div>
-
                         <div className="grid gap-5 pl-2 relative border-l-2 border-stone-200 ml-4 pb-8">
                             {day.items.map((item, idx) => (
                                 <Link key={idx} href={`/explore/${item.place.id}`} className="group block pl-6 relative">
-                                    {/* Timeline Dot */}
                                     <div className={`absolute -left-[9px] top-8 w-4 h-4 rounded-full border-2 border-white shadow-sm z-10 transition-colors duration-300 ${item.place.type === 'food' ? 'bg-[#D97C5F] group-hover:bg-[#b05a40]' : 'bg-[#2C1810] group-hover:bg-black'}`}></div>
-
                                     <div className="bg-white rounded-xl p-3 shadow-md hover:shadow-2xl transition-all duration-300 border border-stone-100 hover:border-[#D97C5F]/30 flex gap-4 relative overflow-hidden items-center group-hover:-translate-y-1">
                                         <div className="relative h-24 w-24 shrink-0 rounded-lg overflow-hidden bg-gray-200 shadow-inner">
-                                            <Image
-                                                src={item.place.image}
-                                                alt={item.place.name}
-                                                fill
-                                                className="object-cover group-hover:scale-110 transition-transform duration-700"
-                                                unoptimized
-                                            />
+                                            <Image src={item.place.image} alt={item.place.name} fill className="object-cover group-hover:scale-110 transition-transform duration-700" unoptimized />
                                             {(item.place.type === 'food' || item.place.price > 1) && (
-                                                <div className="absolute top-1 right-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded-full backdrop-blur-sm">
-                                                    {'$'.repeat(item.place.price)}
-                                                </div>
+                                                <div className="absolute top-1 right-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded-full backdrop-blur-sm">{'$'.repeat(item.place.price)}</div>
                                             )}
                                         </div>
                                         <div className="flex-1 min-w-0 py-1">
                                             <div className="flex justify-between items-start mb-1">
-                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.place.type === 'food'
-                                                    ? 'bg-orange-50 text-orange-600 border-orange-100'
-                                                    : 'bg-stone-50 text-stone-500 border-stone-100'
-                                                    }`}>
-                                                    {item.time}
-                                                </span>
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.place.type === 'food' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-stone-50 text-stone-500 border-stone-100'}`}>{item.time}</span>
                                             </div>
                                             <h3 className="text-base font-bold font-serif text-[#2C1810] truncate group-hover:text-[#D97C5F] transition-colors">{item.place.name}</h3>
                                             <p className="text-xs text-stone-500 truncate mt-0.5">{item.place.district} · {item.place.category}</p>
-                                            <div className="mt-2 flex items-center gap-1 text-[10px] text-stone-400 font-medium">
-                                                <Sparkles size={10} className="text-[#D97C5F]" />
-                                                {item.reason}
-                                            </div>
+                                            <div className="mt-2 flex items-center gap-1 text-[10px] text-stone-400 font-medium"><Sparkles size={10} className="text-[#D97C5F]" />{item.reason}</div>
                                         </div>
                                     </div>
                                 </Link>

@@ -9,130 +9,130 @@ import clsx from 'clsx';
 // 1. Mock Data
 const destinations = [
   {
-    id: 'taipei',
-    name: 'TAIPEI', // Represents "North" (北部)
-    description: 'Explore the blend of history and modernity in the heart of the North.',
-    bgImage: 'https://loremflickr.com/1920/1080/taipei,city/all',
+    id: 'north',
+    name: '北部',
+    description: '穿梭在現代霓虹與古老街屋之間，感受大屯山系與太平洋交織的文化脈動。',
+    bgImage: '/images/home/north_bg.png',
     places: [
       {
-        id: 'tp-1',
-        title: '大稻埕歷史文化', // PDF: A.城市文化 (北部)
+        id: 'A-North',
+        title: '大稻埕歷史文化',
         location: '北部 | 迪化街區',
-        image: 'https://loremflickr.com/600/800/dadaocheng,street/all',
+        image: '/images/home/cards/north_dadaocheng.png',
       },
       {
-        id: 'tp-2',
-        title: '九份金瓜石', // PDF: B.老街 (北部)
+        id: 'B-North',
+        title: '九份金瓜石',
         location: '北部 | 瑞芳山城',
-        image: 'https://loremflickr.com/600/800/jiufen,lantern/all',
+        image: '/images/home/cards/north_jiufen.png',
       },
       {
-        id: 'tp-3',
-        title: '北美館×當代藝術', // PDF: D.展覽 (北部)
+        id: 'C-North',
+        title: '金面山步道',
+        location: '北部 | 內湖岩層',
+        image: '/images/home/cards/north_jinmianshan.png',
+      },
+      {
+        id: 'D-North',
+        title: '北美館×當代藝術',
         location: '北部 | 圓山公園',
-        image: 'https://loremflickr.com/600/800/taipei,museum/all',
-      },
-      {
-        id: 'tp-4',
-        title: '平溪天燈古道', // PDF: F.季節主題 (北部)
-        location: '北部 | 平溪線',
-        image: 'https://loremflickr.com/600/800/skylantern,pingxi/all',
+        image: '/images/home/cards/north_tfam.png',
       }
     ]
   },
   {
-    id: 'taichung',
-    name: 'TAICHUNG', // Represents "Central" (中部)
-    description: 'Discover the cultural hub and vibrant urban life of Central Taiwan.',
-    bgImage: 'https://loremflickr.com/1920/1080/taichung,park/all',
+    id: 'central',
+    name: '中部',
+    description: '從舊城區的知識底蘊到草悟道的現代綠意，在山海之間找尋台中特有的舒緩節奏。',
+    bgImage: '/images/home/central_bg.png',
     places: [
       {
-        id: 'tc-1',
-        title: '舊城區知識文化', // PDF: A.城市文化 (中部)
+        id: 'A-Central',
+        title: '舊城區知識文化',
         location: '中部 | 台中車站',
-        image: 'https://loremflickr.com/600/800/taichung,station/all',
+        image: '/images/home/cards/central_station.png',
       },
       {
-        id: 'tc-2',
-        title: '鹿港小鎮巷弄', // PDF: B.老街 (中部)
+        id: 'B-Central',
+        title: '鹿港小鎮巷弄',
         location: '中部 | 彰化鹿港',
-        image: 'https://loremflickr.com/600/800/lukang,temple/all',
+        image: '/images/home/cards/central_lukang.png',
       },
       {
-        id: 'tc-3',
-        title: '國美館×草悟道', // PDF: D.展覽 (中部)
-        location: '中部 | 西區綠帶',
-        image: 'https://loremflickr.com/600/800/calligraphy,greenway/all',
-      },
-      {
-        id: 'tc-4',
-        title: '車埕×明潭湖景', // PDF: C.自然 (中部)
+        id: 'C-Central',
+        title: '車埕×明潭湖景',
         location: '中部 | 南投水里',
-        image: 'https://loremflickr.com/600/800/sunmoonlake,water/all',
+        image: '/images/home/cards/central_checheng.png',
+      },
+      {
+        id: 'D-Central',
+        title: '國美館×草悟道',
+        location: '中部 | 西區綠帶',
+        image: '/images/home/cards/central_greenway.png',
       }
     ]
   },
   {
-    id: 'kaohsiung',
-    name: 'KAOHSIUNG', // Represents "South" (南部)
-    description: 'Experience the artistic harbor views and passion of the South.',
-    bgImage: 'https://loremflickr.com/1920/1080/kaohsiung,pier2/all',
+    id: 'south',
+    name: '南部',
+    description: '踏入台灣歷史的起點。在廟宇紅牆與文創港灣中，體驗最有熱度的南國生活。',
+    bgImage: '/images/home/south_bg.png',
     places: [
       {
-        id: 'ks-1',
-        title: '鹽埕舊街區', // PDF: B.老街 (南部)
-        location: '南部 | 高雄鹽埕',
-        image: 'https://loremflickr.com/600/800/yancheng,kaohsiung/all',
-      },
-      {
-        id: 'ks-2',
-        title: '駁二×港都藝術', // PDF: D.展覽 (南部)
-        location: '南部 | 高雄港灣',
-        image: 'https://loremflickr.com/600/800/pier2,art/all',
-      },
-      {
-        id: 'ks-3',
-        title: '府城知識故事', // PDF: A.城市文化 (南部)
+        id: 'A-South',
+        title: '府城知識故事',
         location: '南部 | 台南中西區',
-        image: 'https://loremflickr.com/600/800/tainan,confucius/all',
+        image: '/images/home/cards/south_tainan.png',
       },
       {
-        id: 'ks-4',
-        title: '阿朗壹古道', // PDF: C.自然 (南部)
+        id: 'B-South',
+        title: '鹽埕舊街區',
+        location: '南部 | 高雄鹽埕',
+        image: '/images/home/cards/south_yancheng.png',
+      },
+      {
+        id: 'C-South',
+        title: '阿朗壹古道',
         location: '南部 | 屏東海岸',
-        image: 'https://loremflickr.com/600/800/alangyi,trail/all',
+        image: '/images/home/cards/south_alangyi.png',
+      },
+      {
+        id: 'D-South',
+        title: '駁二×港都藝術',
+        location: '南部 | 高雄港灣',
+        image: '/images/home/cards/south_pier2.png',
       }
     ]
   },
   {
-    id: 'taitung',
-    name: 'TAITUNG', // Represents "East" (東部)
-    description: 'Immerse yourself in the breathtaking nature and indigenous stories of the East.',
-    bgImage: 'https://loremflickr.com/1920/1080/taitung,coast/all',
+    id: 'east',
+    name: '東部',
+    description: '聽太平洋的浪潮拍打著奇岩。在縱谷的純粹自然中，找回與心靈對話的呼吸頻率。',
+    bgImage: '/images/home/east_bg.png',
     places: [
       {
-        id: 'tt-1',
-        title: '小野柳海濱', // PDF: C.自然 (東部)
-        location: '東部 | 台東海岸',
-        image: 'https://loremflickr.com/600/800/xiaoyeliu,rock/all',
-      },
-      {
-        id: 'tt-2',
-        title: '熱氣球嘉年華', // PDF: F.季節主題 (東部)
-        location: '東部 | 鹿野高台',
-        image: 'https://loremflickr.com/600/800/hotairballoon,taitung/all',
-      },
-      {
-        id: 'tt-3',
-        title: '舊城歷史軸線', // PDF: A.城市文化 (東部)
+        id: 'A-East',
+        title: '舊城歷史軸線',
         location: '東部 | 花蓮市區',
-        image: 'https://loremflickr.com/600/800/hualien,city/all',
+        image: '/images/home/cards/east_hualien_city.png',
       },
       {
-        id: 'tt-4',
-        title: '頭城老街文史', // PDF: B.老街 (東部)
+        id: 'B-East',
+        title: '頭城老街文史',
         location: '東部 | 宜蘭頭城',
-        image: 'https://loremflickr.com/600/800/toucheng,oldstreet/all',
+        image: 'https://loremflickr.com/600/800/yilan,ancient,street/all',
+      },
+      {
+        id: 'C-East',
+        title: '小野柳海濱',
+        location: '東部 | 台東海岸',
+        image: 'https://loremflickr.com/600/800/ocean,volcanic,rocks/all',
+      },
+      {
+        id: 'D-East',
+        title: '文創園區巡禮',
+        location: '東部 | 花蓮酒廠',
+        image: 'https://loremflickr.com/600/800/factory,art,creative/all',
       }
     ]
   }

@@ -1,90 +1,64 @@
-# Story Path Project Context
+# Story Path (Wanderly) Project Context
+**Last Updated: 2025-12-22**
 
-## Project Overview
-**Name**: Story Path (Wanderly - Discover Your Taiwan)
-**Description**: A travel planning application focused on Taiwanese cultural and deep-tourism experiences.
-**Language**: zh-TW
+## 1. Project Overview
+**Name**: Wanderly (Discover Your Taiwan)
+**Description**: A travel planning application focused on Taiwanese cultural and deep-tourism experiences, featuring AI-powered itinerary generation and a personal collection system.
+**Language**: zh-TW (Traditional Chinese)
 
-## Tech Stack
-- **Framework**: Next.js 16.0.10 (App Router)
+## 2. Tech Stack
+- **Framework**: Next.js 15+ (App Router)
 - **Language**: TypeScript
-- **UI Library**: React 19.2.1
-- **Styling**: Tailwind CSS v4
+- **Styling**: Tailwind CSS v4 (Vanilla CSS logic for animations)
 - **Icons**: lucide-react
 - **Fonts**: Noto Serif TC (Google Fonts)
+- **Storage**: LocalStorage (Client-side persistence)
 
-## Project Structure
+## 3. Project Structure
 ```text
 /
-├── app/                  # Next.js App Router pages
-│   ├── about/            # About page
-│   ├── explore/          # Explore page (discovery)
-│   ├── home/             # Home page (landing)
-│   ├── my-list/          # User's saved list
-│   ├── plan/             # Itinerary planning
+├── app/                  # Next.js App Router
+│   ├── explore/          # Discovery page with filters
+│   │   └── [slug]/       # Rich article detail pages
+│   ├── plan/             # AI Itinerary Planner (Scoring logic)
+│   ├── my-list/          # Personal Collection (Tabs: Routes & AI Plans)
 │   ├── quiz/             # Personality/Preference quiz
-│   ├── result/           # Quiz results
-│   ├── layout.tsx        # Root layout (Navbar, Fonts)
-│   └── page.tsx          # Root page (redirects or landing)
-├── components/           # Reusable UI components
-│   └── Navbar.tsx        # Main navigation
-├── lib/                  # Data and utility functions
-│   ├── placesData.ts     # Mock data for attractions
-│   └── quizData.ts       # Mock data for quiz
-├── public/               # Static assets
-└── package.json          # Dependencies
+│   ├── layout.tsx        # Global layout & Theme
+│   └── page.tsx          # Landing page
+├── constants/            # Centralized data
+│   ├── itineraries.ts    # Attractions pool & Static routes
+│   └── articles.ts       # Rich content for explore details
+├── lib/                  # Utilities
+└── public/               # Static assets
 ```
 
-## Data Schemas
+## 4. Feature Modules
 
-### Places (`lib/placesData.ts`)
-The application currently uses static mock data.
-```typescript
-interface Place {
-  id: number;
-  name: string;
-  region: string;     // e.g., '北部', '中部'
-  category: string;   // e.g., '文化', '老街', '自然'
-  duration: string;   // e.g., '1日遊', '2天1夜'
-  image: string;      // LoremFlickr URL
-  description: string;
-}
-```
+### A. AI Itinerary Planner (`/plan`)
+- **Logic**: Uses a Weighted Scoring algorithm based on:
+    - User interests (Themes: Culture, Food, Nature, etc.)
+    - Companion type (Solo, Couple, Family, Friends)
+    - Budget level (1-3)
+    - City filter (Strict city matching)
+- **Persistence**: Saves generated plans to `localStorage` under `my-custom-plans`.
+- **Deep Load**: Supports direct loading via URL parameter `?planId=...`.
 
-### Quiz (`lib/quizData.ts`)
-Defines the structure for the personality quiz.
-```typescript
-type Dimension = "OldStreet" | "Nature" | "Culture" | "Lifestyle";
+### B. Personal Collection (`/my-list`)
+- **Interface**: Tabbed navigation between:
+    1. **Saved Routes**: Hand-picked itineraries from the Explore page.
+    2. **AI Plans**: Custom-generated plans from the Planner.
+- **Feedback**: Integrated Toast system with direct links to the collection page.
 
-interface Option {
-  label: string;
-  value: Dimension;
-}
+### C. Discovery Content (`/explore`)
+- **Article System**: Dynamic rendering of long-form travel guides with full-width images and structured sections.
 
-interface Question {
-  id: number;
-  title: string;
-  questionText: string;
-  options: Option[];
-}
+## 5. Current Development Status
+- **Images**: Using LoremFlickr for stable, keyword-based placeholders.
+- **Animations**: Custom `fade-in`, `slide-up`, and `bounce-in` transitions applied consistently.
+- **Feedback Loop**: "Save to List" buttons provide immediate visual feedback (state change) and toast notifications.
+- **Navigation**: "View Full Plan" in My List is fully functional, restoring the planner state via ID.
 
-// Result profiles map Dimensions to recommendations
-interface ResultProfile {
-  title: string;
-  description: string;
-  match: string;
-  recommend: string;
-  tags: string[];
-}
-```
-
-## Key Features
-1.  **Home Page**: Features destinations and sliders.
-2.  **Explore**: Discover places by filters (Region, Style, Duration).
-3.  **Quiz**: A 4-question quiz to determine travel preferences (OldStreet, Nature, Culture, Lifestyle).
-4.  **Itinerary Planning**: Ability to create travel plans.
-
-## Current Status (as of 2025-12-18)
--   **Images**: All images are currently using `https://loremflickr.com` to avoid broken links.
--   **Data**: The `places` data contains basic fields. Note: Previous discussions regarding adding `city` and `timePreference` fields have NOT been reflected in the current `placesData.ts`.
--   **Styling**: Uses a consistent color palette (`bg-[#FFF9F2]`) and Noto Serif font for a cultural feel.
+## 6. Development Instructions for Next Session
+- **Planner State**: Ensure the `PlannerContent` remains wrapped in `Suspense` due to `useSearchParams`.
+- **Data Hydration**: Check `localStorage` parsing for both `my-list` and `my-custom-plans` when modifying collection logic.
+- **Aesthetics**: Maintain the premium "cultural" vibe (bg: #FFF9F2, accent: #D97C5F, dark: #2C1810).
