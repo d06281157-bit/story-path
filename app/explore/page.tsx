@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, ArrowRight } from 'lucide-react';
+import { ITINERARIES } from '@/constants/itineraries'
 
 // --- 1. Route Data (Same as Plan, but strictly static here) ---
 const routes = [
@@ -82,8 +83,8 @@ export default function ExplorePage() {
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}
                                 className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 ${selectedCategory === cat
-                                        ? 'bg-[#2C1810] text-[#FFF9F2] shadow-lg scale-105'
-                                        : 'bg-white text-gray-500 hover:bg-[#D97C5F]/10 hover:text-[#D97C5F]'
+                                    ? 'bg-[#2C1810] text-[#FFF9F2] shadow-lg scale-105'
+                                    : 'bg-white text-gray-500 hover:bg-[#D97C5F]/10 hover:text-[#D97C5F]'
                                     }`}
                             >
                                 {cat}
@@ -96,16 +97,16 @@ export default function ExplorePage() {
             {/* Grid Content */}
             <div className="max-w-7xl mx-auto px-6 pb-24">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredRoutes.map((route) => (
+                    {ITINERARIES.map((route) => (
                         <Link
-                            href={`/explore/${route.id}`}
+                            href={`/explore/${route.slug}`}
                             key={route.id}
                             className="group block relative"
                         >
                             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-sm shadow-stone-200 group-hover:shadow-xl transition-all duration-500 bg-gray-200">
                                 <Image
-                                    src={`/images/itineraries/${route.id}-1.jpg`}
-                                    alt={route.name}
+                                    src={route.images[0]}
+                                    alt={route.title}
                                     fill
                                     className="object-cover group-hover:scale-105 transition-transform duration-700"
                                     unoptimized
@@ -117,17 +118,17 @@ export default function ExplorePage() {
                                 {/* Floating Tag */}
                                 <div className="absolute top-4 left-4">
                                     <span className="px-3 py-1 bg-white/20 backdrop-blur-md border border-white/20 text-white text-xs font-bold rounded-full tracking-wider uppercase">
-                                        {route.region}
+                                        {route.tripDetails.location}
                                     </span>
                                 </div>
 
                                 {/* Content */}
                                 <div className="absolute bottom-0 left-0 p-6 w-full transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
                                     <span className="text-[#D97C5F] text-xs font-bold uppercase tracking-wider mb-2 block">
-                                        {route.categoryGroup}
+                                        {route.tag}
                                     </span>
                                     <h3 className="text-2xl font-bold text-white font-serif mb-2 leading-snug">
-                                        {route.name}
+                                        {route.title}
                                     </h3>
                                     <div className="flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
                                         <p className="text-white/80 text-sm line-clamp-1 flex-1 pr-4">
