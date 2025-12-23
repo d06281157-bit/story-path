@@ -15,18 +15,17 @@ export default function Navbar() {
           <span className="font-serif font-bold text-xl tracking-wide text-gray-800">Wanderly</span>
         </Link>
 
-        <div className="flex items-center gap-8 text-sm font-medium text-gray-500">
-          <Link href="/" className="hover:text-terracotta transition-colors">
+        <div className="flex items-center gap-6 md:gap-8 text-xs md:text-sm font-medium text-gray-500">
+          <Link href="/" className="hover:text-terracotta transition-colors whitespace-nowrap">
             Quiz
           </Link>
-          <Link href="/explore" className="hover:text-terracotta transition-colors">
+          <Link href="/explore" className="hover:text-terracotta transition-colors whitespace-nowrap">
             Explore
           </Link>
-          <Link href="/plan" className="hover:text-terracotta transition-colors">
+          <Link href="/plan" className="hover:text-terracotta transition-colors whitespace-nowrap">
             Plan
           </Link>
-          {/* Updated Link: My List */}
-          <Link href="/my-list" className="hover:text-terracotta transition-colors">
+          <Link href="/my-list" className="bg-terracotta/10 text-terracotta px-4 py-1.5 rounded-full hover:bg-terracotta hover:text-white transition-all whitespace-nowrap font-bold">
             My List
           </Link>
         </div>

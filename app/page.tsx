@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Map, Coffee, BookOpen, Mountain } from "lucide-react";
+import { Map, Coffee, BookOpen, Mountain, Home as HomeIcon } from "lucide-react";
 
 export default function Home() {
   return (
@@ -42,10 +42,20 @@ export default function Home() {
 
         <Link
           href="/quiz"
-          className="inline-block bg-terracotta text-white font-bold py-5 px-12 rounded-full shadow-lg hover:bg-[#c26a4e] transition-all transform hover:scale-[1.02] active:scale-[0.98] tracking-widest text-xl"
+          className="inline-block bg-terracotta text-white font-bold py-5 px-12 rounded-full shadow-lg hover:bg-[#c26a4e] transition-all transform hover:scale-[1.02] active:scale-[0.98] tracking-widest text-xl w-full max-w-sm"
         >
           開始測驗 START
         </Link>
+
+        <div className="pt-2">
+          <Link
+            href="/home"
+            className="inline-flex items-center gap-2 text-stone-400 hover:text-terracotta transition-colors text-sm font-bold px-6 py-2 rounded-full border border-stone-200 hover:border-terracotta/30"
+          >
+            <HomeIcon size={16} />
+            回到首頁 HOME
+          </Link>
+        </div>
 
         <p className="text-sm text-gray-400">約需 2-3 分鐘 · 共 4 題情境問答</p>
       </div>

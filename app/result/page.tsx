@@ -1,11 +1,11 @@
 'use client';
 
-import { Suspense, useMemo } from 'react';
+import { Suspense, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { resultProfiles, Dimension, dimensions } from '@/lib/quizData';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
-import { RotateCcw, Share2, ArrowRight } from 'lucide-react';
+import { RotateCcw, Share2, ArrowRight, Home } from 'lucide-react';
 
 function ResultContent() {
     const searchParams = useSearchParams();
@@ -31,6 +31,14 @@ function ResultContent() {
     // Determine result
     // Find key with max value. If tie, prioritize order: OldStreet > Nature > Culture > Lifestyle (arbitrary tie-break)
     const resultDimension = (Object.keys(scores) as Dimension[]).reduce((a, b) => scores[a] >= scores[b] ? a : b);
+
+    // Save result to localStorage for other pages (like Journal)
+    useEffect(() => {
+        if (resultDimension) {
+            localStorage.setItem('wanderly-persona', resultDimension);
+        }
+    }, [resultDimension]);
+
     const result = resultProfiles[resultDimension];
 
     // Chart Data
@@ -162,13 +170,22 @@ function ResultContent() {
 
                 {/* Actions */}
                 <div className="pt-8 flex flex-col items-center gap-6">
-                    <button
-                        onClick={() => router.push('/')}
-                        className="w-full max-w-sm bg-terracotta text-white font-bold py-4 px-8 rounded-full shadow-xl shadow-terracotta/20 hover:bg-[#c26a4e] hover:scale-[1.02] transform transition-all flex items-center justify-center gap-3 text-lg"
-                    >
-                        <RotateCcw size={20} />
-                        重新測驗 RESTART
-                    </button>
+                    <div className="flex flex-col md:flex-row gap-4 w-full max-w-xl">
+                        <button
+                            onClick={() => router.push('/')}
+                            className="flex-1 bg-terracotta text-white font-bold py-4 px-8 rounded-full shadow-xl shadow-terracotta/20 hover:bg-[#c26a4e] hover:scale-[1.02] transform transition-all flex items-center justify-center gap-3 text-lg"
+                        >
+                            <RotateCcw size={20} />
+                            重新測驗 RESTART
+                        </button>
+                        <button
+                            onClick={() => router.push('/home')}
+                            className="flex-1 bg-white text-stone-500 font-bold py-4 px-8 rounded-full border border-stone-200 hover:border-terracotta/30 hover:text-terracotta transition-all flex items-center justify-center gap-3 text-lg shadow-sm"
+                        >
+                            <Home size={20} />
+                            回到首頁 HOME
+                        </button>
+                    </div>
                     <p className="text-[10px] text-gray-400 tracking-[0.2em] font-medium">STORY PATH · TRAVEL PERSONA QUIZ © 2024</p>
                 </div>
             </div>

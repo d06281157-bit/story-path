@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { questions, Dimension } from '@/lib/quizData';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Home } from 'lucide-react';
 
 export default function QuizPage() {
   const router = useRouter();
@@ -92,13 +92,21 @@ export default function QuizPage() {
       </div>
 
       {/* Footer */}
-      <div className="p-6 border-t border-gray-100 bg-white/50 backdrop-blur-sm">
+      <div className="p-6 border-t border-gray-100 bg-white/50 backdrop-blur-sm flex justify-between items-center">
         <button
           onClick={handleBack}
           className="flex items-center text-gray-400 hover:text-gray-600 transition-colors text-sm px-4 py-2 rounded-full border border-gray-300"
         >
           <ChevronLeft size={16} className="mr-1" />
           返回 BACK
+        </button>
+
+        <button
+          onClick={() => router.push('/')}
+          className="flex items-center text-stone-500 hover:text-terracotta transition-all text-sm px-4 py-2 rounded-full border border-stone-200 hover:border-terracotta/30 font-bold"
+        >
+          <Home size={16} className="mr-2" />
+          回到首頁 HOME
         </button>
       </div>
     </div>
