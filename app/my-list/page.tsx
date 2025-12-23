@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, ArrowRight, Heart, Trash2, Calendar, Users, Sparkles } from 'lucide-react';
+import { MapPin, ArrowRight, Heart, Trash2, Calendar, Users, Sparkles, Plus } from 'lucide-react';
 import { ITINERARIES } from '@/constants/itineraries';
 
 export default function MyListPage() {
@@ -145,50 +145,66 @@ export default function MyListPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {customPlans.length > 0 ? (
-              customPlans.map((plan) => (
-                <div key={plan.id} className="bg-white rounded-[2rem] p-6 shadow-sm shadow-stone-100 border border-stone-50 group hover:shadow-xl hover:border-[#D97C5F]/20 transition-all duration-500 relative">
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="bg-[#D97C5F]/10 p-3 rounded-2xl text-[#D97C5F]">
-                      <Sparkles size={24} />
-                    </div>
-                    <button
-                      onClick={() => removePlan(plan.id)}
-                      className="p-2 text-stone-300 hover:text-red-500 transition-colors"
-                      title="移除計畫"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  </div>
-
-                  <div className="space-y-4 mb-8">
-                    <h3 className="text-2xl font-bold font-serif text-[#2C1810] leading-tight">
-                      {plan.location} · {plan.duration} 天之旅
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      <div className="flex items-center gap-1.5 px-3 py-1 bg-stone-50 rounded-full text-[11px] font-bold text-stone-500 border border-stone-100">
-                        <Users size={12} /> {plan.companion}
+              <>
+                {customPlans.map((plan) => (
+                  <div key={plan.id} className="bg-white rounded-[2rem] p-6 shadow-sm shadow-stone-100 border border-stone-50 group hover:shadow-xl hover:border-[#D97C5F]/20 transition-all duration-500 relative">
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="bg-[#D97C5F]/10 p-3 rounded-2xl text-[#D97C5F]">
+                        <Sparkles size={24} />
                       </div>
-                      {plan.themes?.map((t: string) => (
-                        <div key={t} className="px-3 py-1 bg-[#D97C5F]/5 rounded-full text-[11px] font-bold text-[#D97C5F] border border-[#D97C5F]/10">
-                          {t}
-                        </div>
-                      ))}
+                      <button
+                        onClick={() => removePlan(plan.id)}
+                        className="p-2 text-stone-300 hover:text-red-500 transition-colors"
+                        title="移除計畫"
+                      >
+                        <Trash2 size={20} />
+                      </button>
                     </div>
-                    <p className="text-[10px] text-stone-300 font-bold tracking-widest uppercase flex items-center gap-2">
-                      <Calendar size={10} /> Created on {new Date(plan.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
 
-                  <div className="pt-4">
-                    <Link
-                      href={`/plan?planId=${plan.id}`}
-                      className="block w-full text-center py-3.5 bg-stone-50 text-stone-600 rounded-xl text-sm font-bold hover:bg-[#D97C5F] hover:text-white transition-all duration-300 border border-stone-100 flex items-center justify-center gap-2 group"
-                    >
-                      查看完整計畫 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                    </Link>
+                    <div className="space-y-4 mb-8">
+                      <h3 className="text-2xl font-bold font-serif text-[#2C1810] leading-tight">
+                        {plan.location} · {plan.duration} 天之旅
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-stone-50 rounded-full text-[11px] font-bold text-stone-500 border border-stone-100">
+                          <Users size={12} /> {plan.companion}
+                        </div>
+                        {plan.themes?.map((t: string) => (
+                          <div key={t} className="px-3 py-1 bg-[#D97C5F]/5 rounded-full text-[11px] font-bold text-[#D97C5F] border border-[#D97C5F]/10">
+                            {t}
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-stone-300 font-bold tracking-widest uppercase flex items-center gap-2">
+                        <Calendar size={10} /> Created on {new Date(plan.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                    <div className="pt-4">
+                      <Link
+                        href={`/plan?planId=${plan.id}`}
+                        className="block w-full text-center py-3.5 bg-stone-50 text-stone-600 rounded-xl text-sm font-bold hover:bg-[#D97C5F] hover:text-white transition-all duration-300 border border-stone-100 flex items-center justify-center gap-2 group"
+                      >
+                        查看完整計畫 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+
+                {/* Add New Plan Button Card */}
+                <Link
+                  href="/plan"
+                  className="bg-white/40 border-2 border-dashed border-stone-200 rounded-[2rem] p-6 flex flex-col items-center justify-center gap-4 hover:border-[#D97C5F]/40 hover:bg-[#D97C5F]/5 transition-all group min-h-[300px]"
+                >
+                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-stone-300 group-hover:text-[#D97C5F] group-hover:scale-110 transition-all shadow-sm">
+                    <Plus size={32} />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-lg font-bold text-stone-400 group-hover:text-[#D97C5F]">新增 AI 智慧計畫</h3>
+                    <p className="text-xs text-stone-300 mt-1">開啟新一輪的靈感規劃</p>
+                  </div>
+                </Link>
+              </>
             ) : (
               <EmptyState type="plans" />
             )}

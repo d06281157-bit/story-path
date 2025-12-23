@@ -4,17 +4,21 @@ import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { MapPin, ArrowRight, Heart } from 'lucide-react';
+import { MapPin, ArrowRight, Heart, ChevronDown, Filter } from 'lucide-react';
 import { ITINERARIES } from '@/constants/itineraries'
 
-const CATEGORIES = ['全部', '城市文化', '老街', '自然', '展覽', '生活', '季節主題'];
+const CATEGORIES = ['所有風格', '城市文化', '老街', '自然', '展覽', '生活', '季節主題'];
+const REGIONS = ['所有地區', '北部', '中部', '南部', '東部'];
 
 function ExploreContent() {
     const searchParams = useSearchParams();
     const categoryParam = searchParams.get('category');
 
-    const [selectedCategory, setSelectedCategory] = useState('全部');
+    const [selectedCategory, setSelectedCategory] = useState('所有風格');
+    const [selectedRegion, setSelectedRegion] = useState('所有地區');
     const [favorites, setFavorites] = useState<string[]>([]);
+    const [isRegionOpen, setIsRegionOpen] = useState(false);
+    const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
     // Initialize category from URL
     useEffect(() => {
@@ -43,10 +47,12 @@ function ExploreContent() {
         localStorage.setItem('my-list', JSON.stringify(newFavs));
     };
 
-    // Filter matching
-    const filteredRoutes = selectedCategory === '全部'
-        ? ITINERARIES
-        : ITINERARIES.filter(r => r.tag === selectedCategory);
+    // Dual-track Filter Matching
+    const filteredRoutes = ITINERARIES.filter(route => {
+        const categoryMatch = selectedCategory === '所有風格' || route.tag === selectedCategory;
+        const regionMatch = selectedRegion === '所有地區' || route.region === selectedRegion;
+        return categoryMatch && regionMatch;
+    });
 
     return (
         <div className="min-h-screen bg-[#FFF9F2] text-[#2C1810] font-sans">
@@ -72,33 +78,87 @@ function ExploreContent() {
                         探索台灣靈魂
                     </h1>
                     <p className="text-gray-600 max-w-lg mx-auto leading-relaxed font-medium">
-                        我們精選了 24 條最具代表性的深度路線，從北部到東部，涵蓋城市文化、老街與山海自然，帶您走進台灣最真實的故事場景。
+                        我們精選了 24 條最具代表性的深度路線，涵蓋各個地區與文化主題，帶您走進台灣最真實的故事場景。
                     </p>
                 </div>
             </div>
 
-            {/* Filter Tabs */}
-            <div className="sticky top-0 z-30 bg-[#FFF9F2]/80 backdrop-blur-md border-b border-[#D97C5F]/10 mb-12">
-                <div className="max-w-7xl mx-auto px-6 overflow-x-auto scrollbar-hide">
-                    <div className="flex items-center gap-2 md:justify-center py-4 min-w-max">
-                        {CATEGORIES.map(cat => (
-                            <button
-                                key={cat}
-                                onClick={() => setSelectedCategory(cat)}
-                                className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 ${selectedCategory === cat
-                                    ? 'bg-[#2C1810] text-[#FFF9F2] shadow-lg scale-105'
-                                    : 'bg-white text-gray-500 hover:bg-[#D97C5F]/10 hover:text-[#D97C5F]'
-                                    }`}
-                            >
-                                {cat}
-                            </button>
-                        ))}
+            {/* Filter Dropdowns - Sticky Header */}
+            <div className="sticky top-0 z-30 bg-[#FFF9F2]/90 backdrop-blur-xl border-b border-[#D97C5F]/10 shadow-sm">
+                <div className="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2 mr-4">
+                        <Filter size={18} className="text-[#D97C5F]" />
+                        <span className="text-xs font-black text-stone-400 uppercase tracking-widest">進階篩選</span>
                     </div>
+
+                    {/* Region Dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => { setIsRegionOpen(!isRegionOpen); setIsCategoryOpen(false); }}
+                            className="flex items-center gap-3 px-6 py-2.5 bg-white border border-stone-200 rounded-2xl text-sm font-bold shadow-sm hover:border-[#D97C5F]/50 transition-all min-w-[160px] justify-between group"
+                        >
+                            <span className={selectedRegion === '所有地區' ? 'text-stone-400' : 'text-[#D97C5F]'}>
+                                {selectedRegion}
+                            </span>
+                            <ChevronDown size={16} className={`text-stone-300 group-hover:text-[#D97C5F] transition-transform ${isRegionOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {isRegionOpen && (
+                            <div className="absolute top-full left-0 mt-2 w-full bg-white border border-stone-100 rounded-2xl shadow-xl z-50 py-2 animate-scale-in">
+                                {REGIONS.map(reg => (
+                                    <button
+                                        key={reg}
+                                        onClick={() => { setSelectedRegion(reg); setIsRegionOpen(false); }}
+                                        className={`w-full text-left px-6 py-2.5 text-sm font-bold transition-colors ${selectedRegion === reg ? 'bg-[#D97C5F]/5 text-[#D97C5F]' : 'text-stone-500 hover:bg-stone-50'}`}
+                                    >
+                                        {reg}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Category Dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => { setIsCategoryOpen(!isCategoryOpen); setIsRegionOpen(false); }}
+                            className="flex items-center gap-3 px-6 py-2.5 bg-white border border-stone-200 rounded-2xl text-sm font-bold shadow-sm hover:border-[#D97C5F]/50 transition-all min-w-[160px] justify-between group"
+                        >
+                            <span className={selectedCategory === '所有風格' ? 'text-stone-400' : 'text-[#2C1810]'}>
+                                {selectedCategory}
+                            </span>
+                            <ChevronDown size={16} className={`text-stone-300 group-hover:text-[#D97C5F] transition-transform ${isCategoryOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {isCategoryOpen && (
+                            <div className="absolute top-full left-0 mt-2 w-full bg-white border border-stone-100 rounded-2xl shadow-xl z-50 py-2 animate-scale-in">
+                                {CATEGORIES.map(cat => (
+                                    <button
+                                        key={cat}
+                                        onClick={() => { setSelectedCategory(cat); setIsCategoryOpen(false); }}
+                                        className={`w-full text-left px-6 py-2.5 text-sm font-bold transition-colors ${selectedCategory === cat ? 'bg-[#2C1810]/5 text-[#2C1810]' : 'text-stone-500 hover:bg-stone-50'}`}
+                                    >
+                                        {cat}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Clear Filters Button (Only shown if something is selected) */}
+                    {(selectedRegion !== '所有地區' || selectedCategory !== '所有風格') && (
+                        <button
+                            onClick={() => { setSelectedRegion('所有地區'); setSelectedCategory('所有風格'); }}
+                            className="text-xs font-bold text-stone-400 hover:text-[#D97C5F] transition-colors decoration-dotted underline underline-offset-4"
+                        >
+                            清除所有篩選
+                        </button>
+                    )}
                 </div>
             </div>
 
             {/* Grid Content */}
-            <div className="max-w-7xl mx-auto px-6 pb-24">
+            <div className="max-w-7xl mx-auto px-6 pt-12 pb-24">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredRoutes.map((route) => (
                         <Link

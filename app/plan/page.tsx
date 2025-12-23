@@ -20,7 +20,21 @@ import {
     Wallet,
     AlertCircle,
     X,
+    Cloud,
+    Sun,
+    Plane,
+    Bed,
+    ExternalLink,
+    GripVertical,
+    Move,
+    Pencil,
+    Trash,
+    Plus,
+    Upload,
+    Save,
+    Map
 } from 'lucide-react';
+import clsx from 'clsx';
 
 // --- 1. Enriched Mock Database (Score-Based Ready) ---
 interface PlaceData {
@@ -101,10 +115,20 @@ type Pace = 'Slow' | 'Balanced' | 'Fast';
 type Theme = 'Culture' | 'Food' | 'Nature' | 'Shopping' | 'Adventure' | 'Relaxation' | 'Photography' | 'History';
 type Budget = 1 | 2 | 3;
 
+interface ExpenseItem {
+    id: string;
+    label: string;
+    amount: number;
+}
+
 interface TripItem {
     time: string;
     place: PlaceData;
     reason: string;
+    note?: string;
+    mapLink?: string;
+    expenseItems?: ExpenseItem[];
+    cost?: number; // Total calculated
 }
 
 interface ItineraryDay {
@@ -172,9 +196,98 @@ function PlannerContent() {
     const [pace, setPace] = useState<Pace>('Balanced');
     const [budget, setBudget] = useState<Budget>(2);
 
-    // Result
     const [itinerary, setItinerary] = useState<ItineraryDay[]>([]);
     const [isSaved, setIsSaved] = useState(false);
+
+    // Drag and Drop State
+    const [draggedItem, setDraggedItem] = useState<{ dayIdx: number; itemIdx: number } | null>(null);
+    const [dragOverItem, setDragOverItem] = useState<{ dayIdx: number; itemIdx: number } | null>(null);
+
+    // Editing State
+    const [editingItem, setEditingItem] = useState<{ dayIdx: number; itemIdx: number; data: TripItem } | null>(null);
+    const [editingCost, setEditingCost] = useState<{ dayIdx: number; itemIdx: number; data: TripItem } | null>(null);
+    const [activeExpenseItemIdx, setActiveExpenseItemIdx] = useState<number>(0);
+
+    const handleDragStart = (dayIdx: number, itemIdx: number) => {
+        setDraggedItem({ dayIdx, itemIdx });
+    };
+
+    const handleDragOver = (e: React.DragEvent, dayIdx: number, itemIdx: number) => {
+        e.preventDefault();
+        if (draggedItem && (draggedItem.dayIdx !== dayIdx || draggedItem.itemIdx !== itemIdx)) {
+            setDragOverItem({ dayIdx, itemIdx });
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent, targetDayIdx: number, targetItemIdx: number) => {
+        e.preventDefault();
+        if (!draggedItem) return;
+
+        const newItinerary = [...itinerary];
+        const sourceDay = newItinerary[draggedItem.dayIdx];
+        const targetDay = newItinerary[targetDayIdx];
+
+        const [movedItem] = sourceDay.items.splice(draggedItem.itemIdx, 1);
+        targetDay.items.splice(targetItemIdx, 0, movedItem);
+
+        setItinerary(newItinerary);
+        setDraggedItem(null);
+        setDragOverItem(null);
+        setIsSaved(false);
+    };
+
+    const saveEdit = () => {
+        if (!editingItem) return;
+        const newItinerary = [...itinerary];
+        newItinerary[editingItem.dayIdx].items[editingItem.itemIdx] = editingItem.data;
+        setItinerary(newItinerary);
+        setEditingItem(null);
+        setIsSaved(false);
+    };
+
+    const deleteItem = (dayIdx: number, itemIdx: number) => {
+        const newItinerary = [...itinerary];
+        newItinerary[dayIdx].items.splice(itemIdx, 1);
+        setItinerary(newItinerary);
+        setEditingItem(null);
+        setIsSaved(false);
+    };
+
+    const addItem = (dayIdx: number) => {
+        const newItem: TripItem = {
+            time: '09:00',
+            place: {
+                id: Date.now(),
+                name: '新行程點',
+                city: '台北',
+                district: '',
+                region: '北部',
+                category: '自訂行程',
+                tags: [],
+                type: 'spot',
+                price: 1,
+                bestTime: 'any',
+                image: 'https://images.unsplash.com/photo-1541414779247-679542fb6d01?q=80&w=400&auto=format&fit=crop',
+                description: '手動新增的景點描述'
+            },
+            reason: '手動新增的景點',
+            expenseItems: []
+        };
+        const newItinerary = [...itinerary];
+        newItinerary[dayIdx].items.push(newItem);
+        setItinerary(newItinerary);
+        setEditingItem({ dayIdx, itemIdx: newItinerary[dayIdx].items.length - 1, data: newItem });
+        setIsSaved(false);
+    };
+
+    const saveCostEdit = () => {
+        if (!editingCost) return;
+        const newItinerary = [...itinerary];
+        newItinerary[editingCost.dayIdx].items[editingCost.itemIdx] = editingCost.data;
+        setItinerary(newItinerary);
+        setEditingCost(null);
+        setIsSaved(false);
+    };
 
     // Deep Load Effect (Handling ?planId=...)
     useEffect(() => {
@@ -588,38 +701,499 @@ function PlannerContent() {
                 <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/3 w-96 h-96 bg-white/40 rounded-full blur-3xl pointer-events-none"></div>
                 <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-64 h-64 bg-[#D97C5F]/5 rounded-full blur-3xl pointer-events-none"></div>
             </div>
-            <main className="max-w-4xl mx-auto px-4 py-8 md:py-12 space-y-12 pb-32">
+
+            <div className="max-w-4xl mx-auto px-4 pt-8">
+                {/* Weather & Booking Quick Links (New Feature) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Weather Widget */}
+                    <div className="bg-white/40 backdrop-blur-md rounded-2xl p-5 border border-white/60 shadow-sm flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                <Cloud size={24} />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-bold text-[#2C1810]">{location || "預定目的地"} 天氣預報</h4>
+                                <p className="text-[10px] text-stone-500 font-medium">預計旅程期間：22°C - 26°C / 晴時多雲</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                            <span className="text-xl font-black text-blue-600 font-serif">24°C</span>
+                            <span className="text-[9px] font-bold text-blue-400 uppercase tracking-tighter">Good for Travel</span>
+                        </div>
+                    </div>
+
+                    {/* Booking Quick Links */}
+                    <div className="bg-white/40 backdrop-blur-md rounded-2xl p-5 border border-white/60 shadow-sm flex items-center gap-3">
+                        <a
+                            href="https://www.skyscanner.com.tw"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 bg-[#2C1810] hover:bg-black text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 transition-all group"
+                        >
+                            <Plane size={16} className="group-hover:-translate-y-1 transition-transform" />
+                            <span className="text-xs font-bold">訂機票</span>
+                        </a>
+                        <a
+                            href="https://www.booking.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 bg-[#D97C5F] hover:bg-[#b05a40] text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 transition-all group"
+                        >
+                            <Bed size={16} className="group-hover:-translate-y-1 transition-transform" />
+                            <span className="text-xs font-bold">訂飯店</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div className="max-w-4xl mx-auto px-4 pt-12">
+                {/* Energy & Logistics Traffic Light (New AI Feature) */}
+                <div className="bg-white/60 backdrop-blur-md rounded-3xl p-6 border border-white shadow-sm mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex items-center gap-6">
+                        <div className="relative">
+                            <div className="w-20 h-20 rounded-full border-4 border-stone-100 flex items-center justify-center relative overflow-hidden">
+                                <div
+                                    className={clsx(
+                                        "absolute bottom-0 left-0 w-full transition-all duration-1000",
+                                        itinerary[0]?.items.length > 4 ? "bg-red-400 h-[85%]" :
+                                            itinerary[0]?.items.length > 3 ? "bg-amber-400 h-[60%]" : "bg-emerald-400 h-[40%]"
+                                    )}
+                                />
+                                <span className="relative z-10 font-black text-xl text-[#2C1810]">
+                                    {itinerary[0]?.items.length > 4 ? 'Low' : itinerary[0]?.items.length > 3 ? 'Mid' : 'High'}
+                                </span>
+                            </div>
+                            <div className="absolute -top-1 -right-1">
+                                {itinerary[0]?.items.length > 4 ? (
+                                    <div className="bg-red-500 w-6 h-6 rounded-full flex items-center justify-center animate-pulse">
+                                        <AlertCircle size={14} className="text-white" />
+                                    </div>
+                                ) : (
+                                    <div className="bg-emerald-500 w-6 h-6 rounded-full flex items-center justify-center">
+                                        <Smile size={14} className="text-white" />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-[#2C1810]">AI 體力預警系統</h4>
+                            <p className="text-xs text-stone-500 mt-1">
+                                {itinerary[0]?.items.length > 4
+                                    ? "⚠️ 行程過於緊湊，預計下午 16:00 體力將見底。"
+                                    : "✅ 步調舒適，符合您的慢活心理測驗結果。"}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <div className={clsx("px-4 py-2 rounded-xl text-[10px] font-bold border transition-colors", itinerary[0]?.items.length > 4 ? "bg-red-50 border-red-100 text-red-600" : "bg-emerald-50 border-emerald-100 text-emerald-600")}>
+                            交通佔比: {itinerary[0]?.items.length > 4 ? '42%' : '18%'}
+                        </div>
+                        <div className="px-4 py-2 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 text-[10px] font-bold">
+                            擁擠避讓: 已啟動
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <main className="max-w-4xl mx-auto px-4 pb-32">
                 {itinerary.map((day) => (
                     <div key={day.day} className="relative">
-                        <div className="sticky top-4 z-30 mb-5 inline-block">
+                        <div className="sticky top-4 z-30 mb-5 flex items-center gap-3">
                             <span className="bg-[#D97C5F] text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow-lg shadow-[#D97C5F]/30 font-serif border-2 border-white/20">第 {day.day} 天</span>
+                            {day.items.some(i => i.cost !== undefined) && (
+                                <div className="bg-white/90 backdrop-blur-sm border border-stone-200 px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-all hover:border-[#D97C5F]">
+                                    <Wallet size={12} className="text-[#D97C5F]" />
+                                    <span className="text-[11px] font-black text-stone-600">
+                                        總預算: <span className="text-[#D97C5F]">TWD {day.items.reduce((sum, item) => sum + (item.cost || 0), 0).toLocaleString()}</span>
+                                    </span>
+                                </div>
+                            )}
                         </div>
                         <div className="grid gap-5 pl-2 relative border-l-2 border-stone-200 ml-4 pb-8">
                             {day.items.map((item, idx) => (
-                                <Link key={idx} href={`/explore/${item.place.id}`} className="group block pl-6 relative">
+                                <div
+                                    key={idx}
+                                    draggable
+                                    onDragStart={() => handleDragStart(day.day - 1, idx)}
+                                    onDragOver={(e) => handleDragOver(e, day.day - 1, idx)}
+                                    onDrop={(e) => handleDrop(e, day.day - 1, idx)}
+                                    className={clsx(
+                                        "group block pl-6 relative transition-all duration-300",
+                                        draggedItem?.dayIdx === day.day - 1 && draggedItem?.itemIdx === idx ? "opacity-30 scale-95" : "opacity-100",
+                                        dragOverItem?.dayIdx === day.day - 1 && dragOverItem?.itemIdx === idx ? "border-t-2 border-[#D97C5F] pt-4" : ""
+                                    )}
+                                >
                                     <div className={`absolute -left-[9px] top-8 w-4 h-4 rounded-full border-2 border-white shadow-sm z-10 transition-colors duration-300 ${item.place.type === 'food' ? 'bg-[#D97C5F] group-hover:bg-[#b05a40]' : 'bg-[#2C1810] group-hover:bg-black'}`}></div>
-                                    <div className="bg-white rounded-xl p-3 shadow-md hover:shadow-2xl transition-all duration-300 border border-stone-100 hover:border-[#D97C5F]/30 flex gap-4 relative overflow-hidden items-center group-hover:-translate-y-1">
-                                        <div className="relative h-24 w-24 shrink-0 rounded-lg overflow-hidden bg-gray-200 shadow-inner">
-                                            <Image src={item.place.image} alt={item.place.name} fill className="object-cover group-hover:scale-110 transition-transform duration-700" unoptimized />
-                                            {(item.place.type === 'food' || item.place.price > 1) && (
-                                                <div className="absolute top-1 right-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded-full backdrop-blur-sm">{'$'.repeat(item.place.price)}</div>
-                                            )}
+                                    <div className="bg-white rounded-[1.25rem] p-4 shadow-md hover:shadow-xl transition-all duration-500 border border-stone-100 hover:border-[#D97C5F]/30 flex gap-4 relative overflow-hidden items-center group-hover:-translate-y-0.5">
+                                        {/* Drag Handle */}
+                                        <div className="cursor-grab active:cursor-grabbing text-stone-200 hover:text-[#D97C5F] pr-1 py-4 transition-colors shrink-0">
+                                            <GripVertical size={20} />
                                         </div>
-                                        <div className="flex-1 min-w-0 py-1">
-                                            <div className="flex justify-between items-start mb-1">
-                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.place.type === 'food' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-stone-50 text-stone-500 border-stone-100'}`}>{item.time}</span>
+
+                                        <Link href={`/explore/${item.place.id}`} className="flex flex-1 gap-4 items-center min-w-0">
+                                            <div className="relative h-20 w-20 md:h-24 md:w-24 shrink-0 rounded-xl overflow-hidden bg-gray-200 shadow-inner group/img">
+                                                <Image src={item.place.image} alt={item.place.name} fill className="object-cover group-hover/img:scale-110 transition-transform duration-1000" unoptimized />
+                                                {(item.place.type === 'food' || item.place.price > 1) && (
+                                                    <div className="absolute top-1.5 right-1.5 bg-black/60 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full backdrop-blur-md border border-white/20">
+                                                        {'$'.repeat(item.place.price)}
+                                                    </div>
+                                                )}
                                             </div>
-                                            <h3 className="text-base font-bold font-serif text-[#2C1810] truncate group-hover:text-[#D97C5F] transition-colors">{item.place.name}</h3>
-                                            <p className="text-xs text-stone-500 truncate mt-0.5">{item.place.district} · {item.place.category}</p>
-                                            <div className="mt-2 flex items-center gap-1 text-[10px] text-stone-400 font-medium"><Sparkles size={10} className="text-[#D97C5F]" />{item.reason}</div>
+                                            <div className="flex-1 min-w-0 space-y-1">
+                                                <div className="flex justify-between items-start">
+                                                    <h3 className="text-lg font-black font-serif text-[#2C1810] group-hover:text-[#D97C5F] transition-colors leading-tight truncate">{item.place.name}</h3>
+                                                    {item.place.id === 101 && (
+                                                        <div className="bg-amber-50 text-amber-700 text-[9px] font-black px-2 py-0.5 rounded-full border border-amber-200 animate-pulse whitespace-nowrap ml-2">
+                                                            ⚡ 推薦：象山
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-stone-500 font-bold">
+                                                    <span className="text-[#D97C5F] bg-[#D97C5F]/10 px-1.5 py-0.5 rounded-md font-black">{item.time}</span>
+                                                    <a
+                                                        href={item.mapLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.place.name + ' ' + item.place.city)}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="flex items-center gap-1.5 px-2 py-0.5 bg-stone-100 hover:bg-[#D97C5F]/10 text-stone-500 hover:text-[#D97C5F] rounded-md transition-all group/map"
+                                                    >
+                                                        <Map size={10} className="text-stone-400 group-hover/map:text-[#D97C5F]" />
+                                                        <span className="font-bold">導覽地圖</span>
+                                                    </a>
+                                                    <span className="text-stone-300">•</span>
+                                                    <span className="truncate">{item.place.category}</span>
+                                                    {item.cost !== undefined && (
+                                                        <>
+                                                            <span className="text-stone-300">•</span>
+                                                            <div className="flex items-center gap-0.5 text-[#D97C5F]">
+                                                                <DollarSign size={10} strokeWidth={3} />
+                                                                <span>{item.cost.toLocaleString()}</span>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+
+                                                {item.note && (
+                                                    <p className="text-[10px] text-stone-400 italic font-medium leading-relaxed truncate px-1 border-l-2 border-stone-100 mt-0.5">「 {item.note} 」</p>
+                                                )}
+
+                                                <div className="flex items-center gap-1.5 text-[10px] text-stone-400 font-bold pt-0.5">
+                                                    <Sparkles size={10} className="text-[#D97C5F] shrink-0" />
+                                                    <span className="truncate opacity-80">{item.reason}</span>
+                                                </div>
+                                            </div>
+                                        </Link>
+
+                                        {/* Action Buttons */}
+                                        <div className="ml-auto flex flex-col gap-1 items-center shrink-0">
+                                            <button
+                                                onClick={() => setEditingCost({ dayIdx: day.day - 1, itemIdx: idx, data: { ...item } })}
+                                                className={clsx(
+                                                    "p-2 rounded-lg transition-all group/cost",
+                                                    item.cost ? "text-[#D97C5F] bg-[#D97C5F]/5" : "text-stone-200 hover:text-[#D97C5F] hover:bg-[#D97C5F]/5"
+                                                )}
+                                                title="消費明細"
+                                            >
+                                                <Wallet size={18} className="group-hover/cost:scale-110 transition-transform" />
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingItem({ dayIdx: day.day - 1, itemIdx: idx, data: { ...item } })}
+                                                className="p-2 text-stone-200 hover:text-[#D97C5F] hover:bg-[#D97C5F]/5 rounded-lg transition-all group/edit"
+                                                title="編輯基本資訊"
+                                            >
+                                                <Pencil size={18} className="group-hover/edit:scale-110 transition-transform" />
+                                            </button>
                                         </div>
                                     </div>
-                                </Link>
+                                </div>
                             ))}
+
+                            {/* Add Item Button */}
+                            <button
+                                onClick={() => addItem(day.day - 1)}
+                                className="group/add mt-4 ml-6 p-4 border-2 border-dashed border-stone-200 rounded-[1.25rem] flex items-center justify-center gap-2 hover:border-[#D97C5F]/40 hover:bg-[#D97C5F]/5 transition-all w-full md:w-[calc(100%-1.5rem)]"
+                            >
+                                <Plus size={20} className="text-stone-300 group-hover/add:text-[#D97C5F] group-hover/add:rotate-90 transition-all duration-500" />
+                                <span className="text-sm font-bold text-stone-400 group-hover/add:text-[#D97C5F]">新增行程項目</span>
+                            </button>
                         </div>
                     </div>
                 ))}
             </main>
+
+            {/* Edit Modal */}
+            {editingItem && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-8 border-b border-stone-100 flex justify-between items-center bg-[#FFF9F2]/50">
+                            <div>
+                                <h3 className="text-2xl font-black font-serif text-[#2C1810]">編輯行程項目</h3>
+                                <p className="text-xs text-stone-500 font-medium">調整細節以符合您的個人喜好</p>
+                            </div>
+                            <button onClick={() => setEditingItem(null)} className="p-2 hover:bg-stone-100 rounded-full transition-colors">
+                                <X size={24} className="text-stone-400" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-8 space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400 ml-1">時間</label>
+                                    <input
+                                        type="text"
+                                        value={editingItem.data.time}
+                                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, time: e.target.value } })}
+                                        className="w-full bg-stone-50 border border-stone-200 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#D97C5F]/20 outline-none"
+                                        placeholder="例如: 10:00"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400 ml-1">分類</label>
+                                    <input
+                                        type="text"
+                                        value={editingItem.data.place.category}
+                                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, place: { ...editingItem.data.place, category: e.target.value } } })}
+                                        className="w-full bg-stone-50 border border-stone-200 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#D97C5F]/20 outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400 ml-1">標題</label>
+                                <input
+                                    type="text"
+                                    value={editingItem.data.place.name}
+                                    onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, place: { ...editingItem.data.place, name: e.target.value } } })}
+                                    className="w-full bg-stone-50 border border-stone-200 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#D97C5F]/20 outline-none"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400 ml-1">地圖連結</label>
+                                <div className="space-y-2">
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={editingItem.data.mapLink || ''}
+                                            onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, mapLink: e.target.value } })}
+                                            className="w-full bg-stone-50 border border-stone-200 rounded-2xl px-4 py-3 pl-10 text-xs font-medium focus:ring-2 focus:ring-[#D97C5F]/20 outline-none"
+                                            placeholder="貼上 Google Maps 連結"
+                                        />
+                                        <MapPin size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
+                                    </div>
+                                    <div className="flex items-center justify-between px-1">
+                                        <p className="text-[9px] text-stone-400 font-medium truncate max-w-[70%]">
+                                            目前連結: <span className="text-[#D97C5F]">{editingItem.data.mapLink || `https://www.google.com/...`}</span>
+                                        </p>
+                                        <a
+                                            href={editingItem.data.mapLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editingItem.data.place.name + ' ' + editingItem.data.place.city)}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-[9px] font-black text-[#D97C5F] hover:underline flex items-center gap-1"
+                                        >
+                                            開啟預覽 <ExternalLink size={10} />
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400 ml-1">備註</label>
+                                <textarea
+                                    rows={3}
+                                    value={editingItem.data.note || ''}
+                                    onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, note: e.target.value } })}
+                                    className="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 text-xs font-medium focus:ring-2 focus:ring-[#D97C5F]/20 outline-none resize-none"
+                                    placeholder="紀錄一些秘密情報..."
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400 ml-1">上傳圖片/檔案</label>
+                                    <button className="w-full border-2 border-dashed border-stone-200 rounded-2xl h-[46px] flex items-center justify-center gap-2 hover:border-[#D97C5F]/30 hover:bg-[#D97C5F]/5 transition-all group">
+                                        <Upload size={16} className="text-stone-300 group-hover:text-[#D97C5F]" />
+                                        <span className="text-[10px] font-bold text-stone-400">點此上傳</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-8 bg-stone-50 border-t border-stone-100 flex gap-3">
+                            <button
+                                onClick={() => deleteItem(editingItem.dayIdx, editingItem.itemIdx)}
+                                className="px-6 py-3 rounded-xl border border-red-100 text-red-500 hover:bg-red-50 transition-all font-bold text-sm flex items-center gap-2"
+                            >
+                                <Trash size={16} /> 刪除
+                            </button>
+                            <div className="flex-1" />
+                            <button
+                                onClick={saveEdit}
+                                className="px-10 py-3 bg-[#2C1810] text-white rounded-xl shadow-lg hover:bg-black transition-all font-bold text-sm flex items-center gap-2"
+                            >
+                                <Save size={16} /> 保存修改
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Expense Detail Modal - Redesigned with List & Numpad Layout */}
+            {editingCost && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in text-[#2C1810]">
+                    <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+                        <div className="p-6 border-b border-stone-100 flex justify-between items-center bg-[#FFF9F2]/80">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-[#D97C5F]/10 rounded-2xl text-[#D97C5F]">
+                                    <Wallet size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black font-serif">消費明細表</h3>
+                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">{editingCost.data.place.name}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setEditingCost(null)} className="p-2 hover:bg-stone-50 rounded-full transition-colors">
+                                <X size={24} className="text-stone-300" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 flex overflow-hidden">
+                            {/* Left Side: Items List */}
+                            <div className="flex-1 overflow-y-auto p-8 space-y-6 border-r border-stone-50">
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-end px-1">
+                                        <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">花費品項</label>
+                                        <span className="text-[10px] font-black text-[#D97C5F]">點擊金額以修改</span>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {(editingCost.data.expenseItems || []).map((item, idx) => (
+                                            <div
+                                                key={item.id}
+                                                onClick={() => setActiveExpenseItemIdx(idx)}
+                                                className={clsx(
+                                                    "flex items-center justify-between p-5 rounded-[1.5rem] border-2 transition-all cursor-pointer group/item",
+                                                    activeExpenseItemIdx === idx ? "bg-[#D97C5F]/5 border-[#D97C5F] shadow-sm" : "bg-stone-50 border-stone-200 hover:border-[#D97C5F]/30"
+                                                )}
+                                            >
+                                                <input
+                                                    type="text"
+                                                    value={item.label}
+                                                    autoFocus={activeExpenseItemIdx === idx}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    onChange={(e) => {
+                                                        const newItems = [...(editingCost.data.expenseItems || [])];
+                                                        newItems[idx].label = e.target.value;
+                                                        setEditingCost({ ...editingCost, data: { ...editingCost.data, expenseItems: newItems } });
+                                                    }}
+                                                    className="bg-transparent font-black text-stone-700 w-full focus:outline-none placeholder:text-stone-300"
+                                                    placeholder="輸入品項名稱..."
+                                                />
+                                                <div className="flex items-center gap-4 shrink-0">
+                                                    <span className={clsx(
+                                                        "text-xl font-black font-serif",
+                                                        activeExpenseItemIdx === idx ? "text-[#D97C5F]" : "text-stone-400"
+                                                    )}>
+                                                        $ {item.amount.toLocaleString()}
+                                                    </span>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const newItems = (editingCost.data.expenseItems || []).filter((_, i) => i !== idx);
+                                                            const total = newItems.reduce((sum, i) => sum + i.amount, 0);
+                                                            setEditingCost({ ...editingCost, data: { ...editingCost.data, expenseItems: newItems, cost: total > 0 ? total : undefined } });
+                                                            if (activeExpenseItemIdx >= newItems.length) setActiveExpenseItemIdx(Math.max(0, newItems.length - 1));
+                                                        }}
+                                                        className="text-stone-300 hover:text-red-400 p-1"
+                                                    >
+                                                        <Trash size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        <button
+                                            onClick={() => {
+                                                const newItems = [...(editingCost.data.expenseItems || []), { id: Date.now().toString(), label: '', amount: 0 }];
+                                                setEditingCost({ ...editingCost, data: { ...editingCost.data, expenseItems: newItems } });
+                                                setActiveExpenseItemIdx(newItems.length - 1);
+                                            }}
+                                            className="w-full p-5 border-2 border-dashed border-stone-200 rounded-[1.5rem] text-stone-400 font-bold text-sm hover:border-[#D97C5F]/30 hover:text-[#D97C5F] hover:bg-[#D97C5F]/5 transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <Plus size={18} /> 新增品項
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-stone-100">
+                                    <div className="bg-[#2C1810] rounded-[2rem] p-6 text-white shadow-xl flex justify-between items-center group">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em] mb-1">本次統計總額</p>
+                                            <p className="text-4xl font-black font-serif tracking-tight">
+                                                <span className="text-[#D97C5F] mr-2">$</span>
+                                                {(editingCost.data.expenseItems || []).reduce((sum, i) => sum + i.amount, 0).toLocaleString()}
+                                            </p>
+                                        </div>
+                                        <div className="p-4 bg-white/10 rounded-[1.25rem] group-hover:bg-[#D97C5F] transition-colors duration-500">
+                                            <DollarSign size={28} className="text-[#D97C5F] group-hover:text-white transition-colors" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Side: Numeric Numpad */}
+                            <div className="w-[300px] bg-stone-50 p-8 flex flex-col justify-center">
+                                <p className="text-center text-[10px] font-black text-stone-400 uppercase tracking-widest mb-6">快捷數字輸入</p>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 'C', 0, '←'].map((key) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => {
+                                                const items = [...(editingCost.data.expenseItems || [])];
+                                                if (items.length === 0) return;
+                                                const targetIdx = activeExpenseItemIdx;
+                                                if (targetIdx >= items.length) return;
+
+                                                if (key === 'C') {
+                                                    items[targetIdx].amount = 0;
+                                                } else if (key === '←') {
+                                                    const s = items[targetIdx].amount.toString();
+                                                    items[targetIdx].amount = s.length > 1 ? Number(s.slice(0, -1)) : 0;
+                                                } else {
+                                                    const currentStr = items[targetIdx].amount.toString();
+                                                    // Max 7 digits
+                                                    if (currentStr.length >= 7) return;
+                                                    items[targetIdx].amount = Number(currentStr === '0' ? key.toString() : currentStr + key.toString());
+                                                }
+
+                                                const total = items.reduce((sum, i) => sum + i.amount, 0);
+                                                setEditingCost({ ...editingCost, data: { ...editingCost.data, expenseItems: items, cost: total > 0 ? total : undefined } });
+                                            }}
+                                            className={clsx(
+                                                "h-16 rounded-2xl text-2xl font-black transition-all flex items-center justify-center shadow-sm",
+                                                key === 'C' ? "bg-red-50 text-red-500 hover:bg-red-100" :
+                                                    key === '←' ? "bg-stone-200 text-stone-600 hover:bg-stone-300" :
+                                                        "bg-white text-[#2C1810] hover:scale-95 active:bg-[#D97C5F] active:text-white"
+                                            )}
+                                        >
+                                            {key}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="mt-8">
+                                    <button
+                                        onClick={saveCostEdit}
+                                        className="w-full py-5 bg-[#D97C5F] text-white rounded-[1.5rem] shadow-lg shadow-[#D97C5F]/20 hover:bg-[#b05a40] hover:-translate-y-1 transition-all font-black text-lg flex items-center justify-center gap-3 active:scale-95"
+                                    >
+                                        <Save size={22} /> 完成記錄
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
