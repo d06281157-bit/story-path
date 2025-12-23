@@ -33,6 +33,9 @@ import {
   Upload,
   Save,
   Map,
+  ThumbsUp,
+  Share2,
+  CheckCircle,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -731,6 +734,12 @@ function PlannerContent() {
   const [itinerary, setItinerary] = useState<ItineraryDay[]>([]);
   const [isSaved, setIsSaved] = useState(false);
 
+  // Voting Hub State
+  const [votingSpots, setVotingSpots] = useState<PlaceData[]>([]);
+  const [votes, setVotes] = useState<Record<number, number>>({});
+  const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
+  const [hasVoted, setHasVoted] = useState<Record<number, boolean>>({});
+
   // Drag and Drop State
   const [draggedItem, setDraggedItem] = useState<{
     dayIdx: number;
@@ -1145,6 +1154,21 @@ function PlannerContent() {
       }
 
       setItinerary(days);
+      
+      // Select candidate spots for voting (un-used high-scored spots)
+      const candidates = scoredPool
+        .filter(p => !usedIds.has(p.id))
+        .slice(0, 4);
+      setVotingSpots(candidates);
+      
+      // Initial mock votes
+      const initialVotes: Record<number, number> = {};
+      candidates.forEach(c => {
+        initialVotes[c.id] = Math.floor(Math.random() * 3);
+      });
+      setVotes(initialVotes);
+      setHasVoted({});
+
       setStep("result");
       setIsLoading(false);
     }, 1500);
@@ -1522,6 +1546,63 @@ function PlannerContent() {
               />
               <span className="text-xs font-bold">訂飯店</span>
             </a>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 pt-6">
+
+        {/* Collaborative Voting Hub Entry (NEW) */}
+        <div className="bg-white/60 backdrop-blur-md rounded-3xl p-6 border border-white shadow-xl mb-8 overflow-hidden relative group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#D97C5F]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-[#D97C5F]/20 transition-all"></div>
+          
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 rounded-2xl bg-terracotta/10 flex items-center justify-center text-terracotta animate-bounce-subtle">
+                <Users size={28} />
+              </div>
+              <div>
+                <h4 className="text-lg font-black text-[#2C1810]">旅伴互動投票區 <span className="text-terracotta">CO-VOTE</span></h4>
+                <p className="text-[11px] text-stone-500 font-bold mt-0.5">
+                  行程不再是一人的壓力！分享候選名單，讓旅伴決定最終驚喜。
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex -space-x-2">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-stone-100 flex items-center justify-center overflow-hidden">
+                        <Image src={`https://i.pravatar.cc/100?img=${i+10}`} alt="avatar" width={24} height={24} />
+                      </div>
+                    ))}
+                  </div>
+                  <span className="text-[10px] font-black text-stone-400">目前有 3 位旅伴正在查看行程...</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <button 
+                onClick={() => setIsVoteModalOpen(true)}
+                className="flex-1 md:flex-none px-6 py-3.5 bg-terracotta text-white rounded-xl font-bold text-sm shadow-lg shadow-terracotta/20 hover:bg-[#b05a40] transition-all flex items-center justify-center gap-2 active:scale-95"
+              >
+                <ThumbsUp size={18} /> 候選景點投票
+                {Object.values(votes).some(v => v > 0) && (
+                  <span className="bg-white text-terracotta w-5 h-5 rounded-full flex items-center justify-center text-[10px] animate-pulse">
+                    {Object.values(votes).reduce((a, b) => a + b, 0)}
+                  </span>
+                )}
+              </button>
+              <button 
+                onClick={() => {
+                  setToastMessage("分享連結已複製！快發送給旅伴吧 🚀");
+                  setShowToast(true);
+                  setTimeout(() => setShowToast(false), 3000);
+                }}
+                className="p-3.5 bg-white text-stone-400 border border-stone-200 rounded-xl hover:text-terracotta hover:border-terracotta/30 transition-all flex items-center justify-center"
+                title="邀請旅伴"
+              >
+                <Share2 size={18} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -2225,6 +2306,147 @@ function PlannerContent() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Collaborative Voting Modal */}
+      {isVoteModalOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-xl z-[150] flex items-center justify-center p-4 md:p-8 animate-fade-in text-[#2C1810]">
+          <div className="bg-[#FFF9F2] w-full max-w-4xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-white/20">
+            <div className="p-8 border-b border-stone-200/50 flex justify-between items-center bg-white/50">
+              <div className="flex items-center gap-5">
+                <div className="p-4 bg-terracotta/10 rounded-2xl text-terracotta ring-4 ring-terracotta/5">
+                  <ThumbsUp size={28} />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black font-serif">旅伴互動投票區</h3>
+                  <p className="text-[11px] text-stone-400 font-bold uppercase tracking-[0.2em] mt-1">
+                    以下為 AI 推薦的備選景點，您可以發送連結請旅伴投票！
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsVoteModalOpen(false)}
+                className="p-3 hover:bg-stone-100 rounded-full transition-all hover:rotate-90"
+              >
+                <X size={28} className="text-stone-300" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8">
+              {votingSpots.length === 0 ? (
+                <div className="h-64 flex flex-col items-center justify-center text-stone-400">
+                  <Sparkles size={48} className="mb-4 opacity-20" />
+                  <p className="font-bold">目前沒有候選景點，請嘗試重新規劃</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {votingSpots.map((spot) => (
+                    <div 
+                      key={spot.id}
+                      className="group relative bg-white rounded-[2rem] p-5 shadow-sm hover:shadow-xl transition-all duration-500 border border-stone-100 flex flex-col"
+                    >
+                      <div className="relative h-48 w-full rounded-2xl overflow-hidden mb-5">
+                        <Image 
+                          src={spot.image} 
+                          alt={spot.name} 
+                          fill 
+                          className="object-cover group-hover:scale-110 transition-transform duration-[2s]" 
+                          unoptimized
+                        />
+                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg">
+                          <ThumbsUp size={14} className={clsx("transition-colors", votes[spot.id] > 0 ? "text-terracotta fill-terracotta" : "text-stone-300")} />
+                          <span className="text-sm font-black text-stone-600">{votes[spot.id] || 0}</span>
+                        </div>
+                        {votes[spot.id] >= Math.max(...Object.values(votes)) && votes[spot.id] > 0 && (
+                          <div className="absolute top-4 left-4 bg-terracotta text-white px-3 py-1 rounded-full text-[10px] font-black tracking-widest flex items-center gap-1.5 shadow-lg animate-pulse">
+                            <Sparkles size={10} /> 人氣最高
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-xl font-black font-serif">{spot.name}</h4>
+                          <span className="px-2 py-0.5 bg-stone-100 text-stone-400 text-[10px] font-black rounded-md">{spot.category}</span>
+                        </div>
+                        <p className="text-xs text-stone-500 font-medium leading-relaxed mb-6 line-clamp-2">
+                          {spot.description}
+                        </p>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button 
+                          onClick={() => {
+                            if (hasVoted[spot.id]) return;
+                            setVotes(prev => ({ ...prev, [spot.id]: (prev[spot.id] || 0) + 1 }));
+                            setHasVoted(prev => ({ ...prev, [spot.id]: true }));
+                            triggerToast("投票成功！感謝您的參與 👍");
+                          }}
+                          disabled={hasVoted[spot.id]}
+                          className={clsx(
+                            "flex-1 py-3.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2",
+                            hasVoted[spot.id]
+                              ? "bg-emerald-50 text-emerald-600 cursor-default"
+                              : "bg-[#2C1810] text-white hover:bg-black active:scale-95"
+                          )}
+                        >
+                          {hasVoted[spot.id] ? (
+                            <><CheckCircle size={18} /> 已感興趣</>
+                          ) : (
+                            <><ThumbsUp size={18} /> 我感興趣</>
+                          )}
+                        </button>
+                        <button 
+                          onClick={() => {
+                            // Add to Itinerary on Day 1 (Demo simplicity)
+                            const newItem: TripItem = {
+                              time: "待定",
+                              place: spot,
+                              reason: "旅伴投票共識推薦",
+                            };
+                            const newItinerary = [...itinerary];
+                            newItinerary[0].items.push(newItem);
+                            setItinerary(newItinerary);
+                            setVotingSpots(prev => prev.filter(s => s.id !== spot.id));
+                            setIsVoteModalOpen(false);
+                            triggerToast(`已將 ${spot.name} 加入行程！ ✨`);
+                          }}
+                          className="px-5 py-3.5 bg-terracotta/10 text-terracotta rounded-xl font-bold text-sm hover:bg-terracotta hover:text-white transition-all active:scale-95"
+                          title="加入行程"
+                        >
+                          <Plus size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="p-8 bg-stone-50 border-t border-stone-200/50 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex -space-x-3">
+                  {[4, 5, 6, 7].map(i => (
+                    <div key={i} className="w-10 h-10 rounded-full border-4 border-white bg-stone-100 overflow-hidden shadow-sm">
+                      <Image src={`https://i.pravatar.cc/100?img=${i+20}`} alt="avatar" width={40} height={40} />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs font-bold text-stone-500">已有 7 位旅伴查看過此清單</p>
+              </div>
+              <button 
+                onClick={() => {
+                  setToastMessage("專屬投票連結已複製 🔗");
+                  setShowToast(true);
+                  setTimeout(() => setShowToast(false), 3000);
+                }}
+                className="w-full md:w-auto px-8 py-4 bg-white border-2 border-terracotta text-terracotta rounded-2xl font-black text-sm hover:bg-terracotta hover:text-white transition-all shadow-lg flex items-center justify-center gap-3 group"
+              >
+                <Share2 size={20} className="group-hover:rotate-12 transition-transform" />
+                分享投票連結給旅伴
+              </button>
             </div>
           </div>
         </div>

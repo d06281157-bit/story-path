@@ -161,34 +161,50 @@ function ExploreContent() {
             <div className="max-w-7xl mx-auto px-6 pt-12 pb-24">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredRoutes.map((route) => (
-                        <Link
-                            href={`/explore/${route.slug}`}
+                        <div
                             key={route.id}
-                            className="group block relative"
+                            className="group block relative h-full"
                         >
                             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-sm shadow-stone-200 group-hover:shadow-xl transition-all duration-500 bg-gray-200">
-                                <Image
-                                    src={route.images[0]}
-                                    alt={route.title}
-                                    fill
-                                    className="object-cover group-hover:scale-105 transition-transform duration-700"
-                                    unoptimized
-                                />
+                                <Link href={`/explore/${route.slug}`} className="absolute inset-0 z-10">
+                                    <Image
+                                        src={route.images[0]}
+                                        alt={route.title}
+                                        fill
+                                        className="object-cover group-hover:scale-105 transition-transform duration-700"
+                                        unoptimized
+                                    />
 
-                                {/* Overlay Gradient */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-70 transition-opacity" />
+                                    {/* Overlay Gradient */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-70 transition-opacity" />
 
-                                {/* Floating Tags (Left) */}
-                                <div className="absolute top-4 left-4 flex gap-2">
-                                    <span className="px-3 py-1 bg-white/20 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold rounded-full tracking-wider uppercase">
-                                        {route.region}
-                                    </span>
-                                    <span className="px-3 py-1 bg-[#D97C5F]/80 backdrop-blur-md text-white text-[10px] font-bold rounded-full tracking-wider uppercase">
-                                        {route.tag}
-                                    </span>
-                                </div>
+                                    {/* Floating Tags (Left) */}
+                                    <div className="absolute top-4 left-4 flex gap-2">
+                                        <span className="px-3 py-1 bg-white/20 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold rounded-full tracking-wider uppercase">
+                                            {route.region}
+                                        </span>
+                                        <span className="px-3 py-1 bg-[#D97C5F]/80 backdrop-blur-md text-white text-[10px] font-bold rounded-full tracking-wider uppercase">
+                                            {route.tag}
+                                        </span>
+                                    </div>
 
-                                {/* My List Heart Icon (Right) */}
+                                    {/* Content */}
+                                    <div className="absolute bottom-0 left-0 p-6 w-full transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                                        <h3 className="text-xl md:text-2xl font-bold text-white font-serif mb-2 leading-snug">
+                                            {route.title}
+                                        </h3>
+                                        <div className="flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
+                                            <p className="text-white/80 text-xs line-clamp-1 flex-1 pr-4">
+                                                {route.description}
+                                            </p>
+                                            <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
+                                                <ArrowRight size={14} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Link>
+
+                                {/* My List Heart Icon (Right) - Z-INDEX MUST BE HIGHER THAN LINK */}
                                 <button
                                     onClick={(e) => toggleFavorite(e, route.id)}
                                     className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-black/20 backdrop-blur-md border border-white/10 text-white hover:bg-white/30 transition-all duration-300 group/heart"
@@ -200,23 +216,8 @@ function ExploreContent() {
                                             : 'group-hover/heart:scale-110'}`}
                                     />
                                 </button>
-
-                                {/* Content */}
-                                <div className="absolute bottom-0 left-0 p-6 w-full transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                                    <h3 className="text-xl md:text-2xl font-bold text-white font-serif mb-2 leading-snug">
-                                        {route.title}
-                                    </h3>
-                                    <div className="flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
-                                        <p className="text-white/80 text-xs line-clamp-1 flex-1 pr-4">
-                                            {route.description}
-                                        </p>
-                                        <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
-                                            <ArrowRight size={14} />
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
-                        </Link>
+                        </div>
                     ))}
                 </div>
 

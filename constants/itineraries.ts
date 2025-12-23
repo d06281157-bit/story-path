@@ -6,8 +6,22 @@ export interface TripDetail {
     season: string;
 }
 
+export interface HistoricalSpot {
+    title: string;
+    oldPhoto: string;
+    currentPhoto: string;
+    description: string;
+    location: { lat: number; lng: number };
+}
+
+export interface HistoricalData {
+    oldMapUrl: string;
+    description: string;
+    comparisonSpots: HistoricalSpot[];
+}
+
 export interface Itinerary {
-    id: string; // A-North, B-Central, etc.
+    id: string; 
     slug: string;
     tag: string;
     title: string;
@@ -16,6 +30,7 @@ export interface Itinerary {
     tripDetails: TripDetail;
     images: string[];
     region: '北部' | '中部' | '南部' | '東部';
+    historicalData?: HistoricalData;
 }
 
 export const ITINERARIES: Itinerary[] = [
@@ -34,7 +49,27 @@ export const ITINERARIES: Itinerary[] = [
             '/images/itineraries/A-North-1.jpg',
             '/images/itineraries/A-North-2.jpg',
             '/images/itineraries/A-North-3.jpg'
-        ]
+        ],
+        historicalData: {
+            oldMapUrl: 'https://map.taiwan-history.org/1904_dadaocheng.jpg',
+            description: '大稻埕在 19 世紀末是台灣最繁華的茶葉貿易中心，這裡保留了獨特的街屋結構。',
+            comparisonSpots: [
+                {
+                    title: '迪化街歷史街屋',
+                    oldPhoto: 'https://memory.culture.tw/upload/history_1.jpg',
+                    currentPhoto: '/images/itineraries/A-North-1.jpg',
+                    description: '迪化街在日治時期稱為「永樂町」，是全台物資的集散地。',
+                    location: { lat: 25.055, lng: 121.509 }
+                },
+                {
+                    title: '北門 (承恩門)',
+                    oldPhoto: 'https://memory.culture.tw/upload/beimen_old.jpg',
+                    currentPhoto: '/images/itineraries/A-North-3.jpg',
+                    description: '北門是台北府城唯一完整保留原貌的城門，見證了從清代到現代的變遷。',
+                    location: { lat: 25.048, lng: 121.511 }
+                }
+            ]
+        }
     },
     {
         id: 'A-Central',
