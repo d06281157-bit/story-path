@@ -76,7 +76,9 @@ export const ITINERARIES: Itinerary[] = [
         description: `穿梭在松園別館與將軍府之間，感受花蓮在日治時期的軍事地位與獨特的海港氛圍。`,
         highlights: ['松園別館', '將軍府', '舊鐵道文化商圈', '花蓮港景點'],
         tripDetails: { duration: '3-4 小時', location: '花蓮市', transport: '自行車/步行', season: '四季皆宜' },
-        images: ['https://loremflickr.com/1200/800/hualien,pine/all', 'https://loremflickr.com/1200/800/hualien,port/all']
+        images: [
+            '/images/home/cards/east_hualien_city.png'
+        ]
     },
 
     // === B. 老街 ===

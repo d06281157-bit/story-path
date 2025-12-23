@@ -1,16 +1,27 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { MapPin, ArrowRight, Heart } from 'lucide-react';
 import { ITINERARIES } from '@/constants/itineraries'
 
 const CATEGORIES = ['全部', '城市文化', '老街', '自然', '展覽', '生活', '季節主題'];
 
-export default function ExplorePage() {
+function ExploreContent() {
+    const searchParams = useSearchParams();
+    const categoryParam = searchParams.get('category');
+
     const [selectedCategory, setSelectedCategory] = useState('全部');
     const [favorites, setFavorites] = useState<string[]>([]);
+
+    // Initialize category from URL
+    useEffect(() => {
+        if (categoryParam && CATEGORIES.includes(categoryParam)) {
+            setSelectedCategory(categoryParam);
+        }
+    }, [categoryParam]);
 
     // Load favorites from localStorage
     useEffect(() => {
@@ -41,16 +52,26 @@ export default function ExplorePage() {
         <div className="min-h-screen bg-[#FFF9F2] text-[#2C1810] font-sans">
 
             {/* Hero Section */}
-            <div className="relative py-20 px-6 text-center overflow-hidden">
-                <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/3 w-96 h-96 bg-[#D97C5F]/10 rounded-full blur-3xl pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-80 h-80 bg-[#2C1810]/5 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="relative py-24 px-6 text-center overflow-hidden h-[400px] flex items-center justify-center">
+                {/* Background Image with Overlay */}
+                <div className="absolute inset-0 z-0">
+                    <Image
+                        src="https://images.unsplash.com/photo-1541414779247-679542fb6d01?q=80&w=2000&auto=format&fit=crop"
+                        alt="Taiwan Mountain Landscape"
+                        fill
+                        className="object-cover opacity-60 scale-105 animate-slow-zoom"
+                        priority
+                        unoptimized
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#FFF9F2]/20 via-[#FFF9F2]/40 to-[#FFF9F2]" />
+                </div>
 
                 <div className="relative z-10 max-w-3xl mx-auto space-y-4">
                     <span className="text-[#D97C5F] font-bold tracking-[0.2em] text-sm uppercase">Curated Itineraries</span>
                     <h1 className="text-4xl md:text-6xl font-black font-serif tracking-tight text-[#2C1810] leading-tight">
                         探索台灣靈魂
                     </h1>
-                    <p className="text-gray-500 max-w-lg mx-auto leading-relaxed">
+                    <p className="text-gray-600 max-w-lg mx-auto leading-relaxed font-medium">
                         我們精選了 24 條最具代表性的深度路線，從北部到東部，涵蓋城市文化、老街與山海自然，帶您走進台灣最真實的故事場景。
                     </p>
                 </div>
@@ -147,4 +168,12 @@ export default function ExplorePage() {
             </div>
         </div>
     );
+}
+
+export default function ExplorePage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-screen text-terracotta">Loading...</div>}>
+            <ExploreContent />
+        </Suspense>
+    )
 }

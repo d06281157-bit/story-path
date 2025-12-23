@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, MapPin, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ITINERARIES } from '@/constants/itineraries';
 import clsx from 'clsx';
 
 // 1. Mock Data
@@ -120,25 +122,26 @@ const destinations = [
         id: 'B-East',
         title: '頭城老街文史',
         location: '東部 | 宜蘭頭城',
-        image: 'https://loremflickr.com/600/800/yilan,ancient,street/all',
+        image: '/images/itineraries/B-East-1.jpg',
       },
       {
         id: 'C-East',
         title: '小野柳海濱',
         location: '東部 | 台東海岸',
-        image: 'https://loremflickr.com/600/800/ocean,volcanic,rocks/all',
+        image: '/images/itineraries/C-East-1.jpg',
       },
       {
         id: 'D-East',
         title: '文創園區巡禮',
         location: '東部 | 花蓮酒廠',
-        image: 'https://loremflickr.com/600/800/factory,art,creative/all',
+        image: '/images/itineraries/D-East-1.jpg',
       }
     ]
   }
 ];
 
 export default function HomePage() {
+  const router = useRouter();
   const [activeDestination, setActiveDestination] = useState(1); // Default to Taiwan
   const [activeCardIndex, setActiveCardIndex] = useState(0); // Track focused card
   const isScrolling = useRef(false);
@@ -146,6 +149,8 @@ export default function HomePage() {
   const cardsContainerRef = useRef<HTMLDivElement>(null);
 
   const currentData = destinations[activeDestination];
+
+  const getSlug = (id: string) => ITINERARIES.find(it => it.id === id)?.slug;
 
   // Reset card index when destination changes
   useEffect(() => {
@@ -283,11 +288,8 @@ export default function HomePage() {
           </div>
 
           <Link
-            href={activeDestination === 1 ? "/explore" : "#"}
-            className={clsx(
-              "inline-flex items-center gap-3 text-white px-8 py-4 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg group animate-fade-in",
-              activeDestination === 1 ? "bg-terracotta hover:bg-[#c26a4e]" : "bg-white/10 border border-white/30 hover:bg-white/20"
-            )}
+            href="/explore"
+            className="inline-flex items-center gap-3 text-white px-8 py-4 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg group bg-terracotta hover:bg-[#c26a4e] animate-fade-in"
             style={{ animationDelay: '0.2s' }}
           >
             <span className="font-bold tracking-widest text-sm uppercase">Explore {currentData.name}</span>
@@ -309,7 +311,14 @@ export default function HomePage() {
               return (
                 <div
                   key={place.id}
-                  onClick={() => setActiveCardIndex(index)}
+                  onClick={() => {
+                    if (isActive) {
+                      const slug = getSlug(place.id);
+                      if (slug) router.push(`/explore/${slug}`);
+                    } else {
+                      setActiveCardIndex(index);
+                    }
+                  }}
                   className={clsx(
                     "shrink-0 flex flex-col gap-4 transition-all duration-500 ease-out transform cursor-pointer",
                     isActive
@@ -342,6 +351,13 @@ export default function HomePage() {
                         )}
                         unoptimized
                       />
+                      {isActive && (
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                          <div className="bg-white/20 backdrop-blur-md p-3 rounded-full border border-white/30">
+                            <ExternalLink size={24} className="text-white" />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

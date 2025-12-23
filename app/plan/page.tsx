@@ -227,7 +227,7 @@ function PlannerContent() {
         return { type: 'city', value: '台北' };
     };
 
-    // --- Weighted Scoring Algorithm ---
+    // --- Weighted Scoring Algorithm with Geographic Clustering ---
     const generateItinerary = () => {
         if (!location.trim()) {
             triggerToast('請輸入想去的城市 (例如：台北、台南)');
@@ -248,30 +248,94 @@ function PlannerContent() {
             let cityPool = placesPool.filter(p => !targetCity || p.city === targetCity);
             if (cityPool.length === 0) cityPool = placesPool.filter(p => p.region === '北部');
 
+            // Define proximity groups for each city
+            const proximityGroups: Record<string, string[][]> = {
+                '高雄': [
+                    ['前鎮區', '苓雅區', '新興區', '前金區'], // Central Kaohsiung
+                    ['鹽埕區', '鼓山區', '旗津區'],           // Harbor Area
+                    ['左營區', '楠梓區'],                     // North Kaohsiung
+                    ['鳳山區', '三民區'],                     // East Kaohsiung
+                    ['大樹區', '大寮區'],                     // Far East (Yida World)
+                ],
+                '台北': [
+                    ['信義區', '大安區', '松山區'],           // East Taipei
+                    ['中正區', '萬華區', '中山區'],           // Central/West Taipei
+                    ['大同區', '中山區'],                     // Dadaocheng Area
+                    ['士林區', '北投區'],                     // North Taipei
+                    ['內湖區', '南港區'],                     // East Tech Area
+                ],
+                '台南': [
+                    ['中西區', '北區', '南區'],               // Central Tainan
+                    ['安平區', '安南區'],                     // Anping Area
+                    ['仁德區', '歸仁區'],                     // East Tainan (Chimei)
+                    ['東區', '永康區'],                       // Yongkang Area
+                ],
+            };
+
+            const getProximityGroup = (city: string, district: string): string[] | null => {
+                const groups = proximityGroups[city];
+                if (!groups) return null;
+                return groups.find(g => g.includes(district)) || null;
+            };
+
             interface ScoredPlace extends PlaceData {
                 score: number;
             }
 
-            const scoredPool: ScoredPlace[] = cityPool.map(place => {
-                let score = 0;
-                const interestMatch = themes.some(t => {
-                    const themeLabel = THEMES.find(th => th.id === t)?.label;
-                    return place.tags.includes(themeLabel || '');
+            // Get theme labels for filtering
+            const selectedThemeLabels = themes.map(t => THEMES.find(th => th.id === t)?.label).filter(Boolean) as string[];
+            const userWantsShopping = themes.includes('Shopping');
+            const userWantsFood = themes.includes('Food');
+
+            // Hard filter: Only include places that match at least one selected theme
+            // Exception: If this leaves too few places, fall back to full pool
+            let themeFilteredPool = cityPool.filter(place => {
+                // If user selected specific themes, only include matching places
+                const hasMatchingTag = selectedThemeLabels.some(label => place.tags.includes(label));
+                // Exclude shopping places if user didn't want shopping
+                if (!userWantsShopping && place.tags.includes('購物')) return false;
+                return hasMatchingTag;
+            });
+
+            // Fallback if filtered pool is too small
+            if (themeFilteredPool.length < duration * 3) {
+                themeFilteredPool = cityPool.filter(place => {
+                    // Still exclude shopping if not selected
+                    if (!userWantsShopping && place.tags.includes('購物')) return false;
+                    return true;
                 });
+            }
+
+            const scoredPool: ScoredPlace[] = themeFilteredPool.map(place => {
+                let score = 0;
+                const interestMatch = selectedThemeLabels.some(label => place.tags.includes(label));
                 if (interestMatch) score += 10;
-                if (themes.includes('Shopping') && place.tags.includes('購物')) score += 5;
-                if (themes.includes('Food') && place.tags.includes('美食')) score += 5;
+                if (userWantsFood && place.tags.includes('美食')) score += 5;
                 if (place.price === budget) score += 2;
                 score += Math.random() * 2;
                 return { ...place, score };
             }).sort((a, b) => b.score - a.score);
 
+            // Determine daily activity count based on pace
+            const getActivitiesForPace = (): { spots: number; foods: number } => {
+                switch (pace) {
+                    case 'Slow': return { spots: 2, foods: 1 }; // 2 spots + 1 meal = 3 total
+                    case 'Balanced': return { spots: 2, foods: 2 }; // 2 spots + 2 meals = 4 total
+                    case 'Fast': return { spots: 3, foods: 2 }; // 3 spots + 2 meals = 5 total
+                    default: return { spots: 2, foods: 2 };
+                }
+            };
+            const paceConfig = getActivitiesForPace();
+
             const days: ItineraryDay[] = [];
             const usedIds = new Set<number>();
-            let currentDistrict = '';
+            let currentProximityGroup: string[] | null = null;
 
             for (let d = 1; d <= duration; d++) {
                 const dailyActivities: TripItem[] = [];
+                // Reset proximity group at the start of each new day
+                currentProximityGroup = null;
+
                 const pickSpot = (slotType: 'spot' | 'food', timeSlot: 'day' | 'night' | 'any') => {
                     let candidates = scoredPool.filter(p => !usedIds.has(p.id));
                     if (timeSlot === 'night') {
@@ -281,32 +345,62 @@ function PlannerContent() {
                     }
                     candidates = candidates.filter(p => p.type === slotType);
                     if (candidates.length === 0) return null;
-                    let bestMatch = candidates.find(p => p.district === currentDistrict);
-                    if (!bestMatch) {
-                        bestMatch = candidates[0];
-                    } else {
-                        if (bestMatch.score < 5 && candidates[0].score > 10) {
-                            bestMatch = candidates[0];
+
+                    let bestMatch: ScoredPlace | undefined;
+
+                    // If we have an established proximity group for the day, strongly prefer candidates from it
+                    if (currentProximityGroup && currentProximityGroup.length > 0) {
+                        const nearCandidates = candidates.filter(p => currentProximityGroup!.includes(p.district));
+                        if (nearCandidates.length > 0) {
+                            // Pick highest scored from nearby group
+                            bestMatch = nearCandidates[0];
                         }
                     }
+
+                    // If no nearby match, pick the highest scored overall and set a new group
+                    if (!bestMatch) {
+                        bestMatch = candidates[0];
+                        // Establish or switch to a new proximity group based on this pick
+                        currentProximityGroup = getProximityGroup(bestMatch.city, bestMatch.district) || [bestMatch.district];
+                    }
+
                     if (bestMatch) {
                         usedIds.add(bestMatch.id);
-                        currentDistrict = bestMatch.district;
+                        // Update group if this pick's group is more specific
+                        const newGroup = getProximityGroup(bestMatch.city, bestMatch.district);
+                        if (newGroup) currentProximityGroup = newGroup;
                         return bestMatch;
                     }
                     return null;
                 };
 
+                // Morning activity
                 const morning = pickSpot('spot', 'day');
                 if (morning) dailyActivities.push({ time: '上午', place: morning, reason: '前往探索' });
-                const lunch = pickSpot('food', 'day');
-                if (lunch) dailyActivities.push({ time: '午餐', place: lunch, reason: '享用美食' });
-                const afternoon = pickSpot('spot', 'day');
-                if (afternoon) dailyActivities.push({ time: '下午', place: afternoon, reason: '午後散策' });
-                const dinner = pickSpot('food', 'night');
-                if (dinner) dailyActivities.push({ time: '晚餐', place: dinner, reason: '美味晚餐' });
-                const evening = pickSpot('spot', 'night');
-                if (evening) dailyActivities.push({ time: '晚上', place: evening, reason: '夜間活動' });
+
+                // Lunch (only if pace allows 2 meals)
+                if (paceConfig.foods >= 1) {
+                    const lunch = pickSpot('food', 'day');
+                    if (lunch) dailyActivities.push({ time: '午餐', place: lunch, reason: '享用美食' });
+                }
+
+                // Afternoon activity (only if pace allows 2+ spots)
+                if (paceConfig.spots >= 2) {
+                    const afternoon = pickSpot('spot', 'day');
+                    if (afternoon) dailyActivities.push({ time: '下午', place: afternoon, reason: '午後散策' });
+                }
+
+                // Dinner (only if pace allows 2 meals)
+                if (paceConfig.foods >= 2) {
+                    const dinner = pickSpot('food', 'night');
+                    if (dinner) dailyActivities.push({ time: '晚餐', place: dinner, reason: '美味晚餐' });
+                }
+
+                // Evening activity (only for fast pace)
+                if (paceConfig.spots >= 3) {
+                    const evening = pickSpot('spot', 'night');
+                    if (evening) dailyActivities.push({ time: '晚上', place: evening, reason: '夜間活動' });
+                }
 
                 if (dailyActivities.length > 0) {
                     days.push({ day: d, items: dailyActivities });

@@ -47,7 +47,7 @@ export default function QuizPage() {
     <div className="flex-1 flex flex-col h-full bg-[#FFF9F2] animate-fade-in relative max-w-2xl mx-auto w-full bg-white/50 rounded-3xl shadow-sm my-4 md:my-10 border border-white overflow-hidden">
       {/* Progress Bar */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gray-200">
-        <div 
+        <div
           className="h-full bg-terracotta transition-all duration-500 ease-out"
           style={{ width: `${progress}%` }}
         />
@@ -65,15 +65,15 @@ export default function QuizPage() {
           {question.questionText}
         </h2>
 
-        <div className="rounded-2xl overflow-hidden mb-6 shadow-sm">
-           <Image 
-             src="https://placehold.co/600x400/FFF9F2/D97C5F?text=StoryPath" 
-             alt="Scenario" 
-             width={600} 
-             height={400} 
-             className="w-full h-48 object-cover"
-             unoptimized
-           />
+        <div className="rounded-2xl overflow-hidden mb-6 shadow-sm border border-gray-100">
+          <Image
+            src={`/Quiz-${currentQuestionIndex + 1}.png`}
+            alt={`Quiz Question ${currentQuestionIndex + 1}`}
+            width={600}
+            height={400}
+            className="w-full h-auto object-contain bg-white"
+            priority
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-4">
@@ -93,7 +93,7 @@ export default function QuizPage() {
 
       {/* Footer */}
       <div className="p-6 border-t border-gray-100 bg-white/50 backdrop-blur-sm">
-        <button 
+        <button
           onClick={handleBack}
           className="flex items-center text-gray-400 hover:text-gray-600 transition-colors text-sm px-4 py-2 rounded-full border border-gray-300"
         >
