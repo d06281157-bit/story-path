@@ -125,6 +125,26 @@ export const ITINERARIES: Itinerary[] = [
             '/images/itineraries/A-Central-2.jpg',
             '/images/itineraries/A-Central-3.jpg',
             '/images/itineraries/A-Central-4.jpg'
+        ],
+        matchScores: {
+            Culture: 95,
+            OldStreet: 88,
+            Lifestyle: 82,
+            Nature: 65
+        },
+        personaReviews: [
+            {
+                author: "小雨",
+                persona: "Culture",
+                content: "宮原眼科的建築細節太驚艷了！日治時期的設計與現代的重新詮釋，讓整條路線充滿故事性。",
+                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Xiaoyu"
+            },
+            {
+                author: "阿偉",
+                persona: "OldStreet",
+                content: "綠空廊道是意外的驚喜！舊鐵路變成空中步道，可以係空中的角度觀察城市紋理。",
+                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Awei"
+            }
         ]
     },
     {
@@ -141,6 +161,26 @@ export const ITINERARIES: Itinerary[] = [
             '/images/itineraries/A-South-1.jpg',
             '/images/itineraries/A-South-2.jpg',
             '/images/itineraries/A-South-3.jpg'
+        ],
+        matchScores: {
+            Culture: 99,
+            OldStreet: 90,
+            Lifestyle: 78,
+            Nature: 55
+        },
+        personaReviews: [
+            {
+                author: "文文",
+                persona: "Culture",
+                content: "台南就是一座活的歷史博物館！孔廟的紅牆與美術館二館的幾何線條形成有趣的對比，非常適合愛思考的人。",
+                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Wenwen"
+            },
+            {
+                author: "老黃",
+                persona: "Lifestyle",
+                content: "走完文化路線後，一定要去民生綠園附近吃張爱妻面和永記虞姬包，美食與文化完美搭配。",
+                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Laohuang"
+            }
         ]
     },
     {
