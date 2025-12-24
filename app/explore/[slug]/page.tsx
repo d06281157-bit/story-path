@@ -14,8 +14,12 @@ import {
     ChevronRight,
     Heart,
     X,
-    ArrowRight as LucideArrowRight
+    ArrowRight as LucideArrowRight,
+    Sparkles,
+    Vote,
+    PlusCircle
 } from 'lucide-react';
+import { Dimension, resultProfiles } from '@/lib/quizData';
 
 // 定義頁面接收的參數型別
 interface PageProps {
@@ -28,13 +32,22 @@ export default function ItineraryPage({ params }: PageProps) {
 
     const [isSaved, setIsSaved] = useState(false);
     const [showToast, setShowToast] = useState(false);
+    const [userPersona, setUserPersona] = useState<Dimension | null>(null);
 
     useEffect(() => {
         if (!item) return;
+
+        // Load favorites
         const saved = localStorage.getItem('my-list');
         if (saved) {
             const list = JSON.parse(saved);
             setIsSaved(list.includes(item.id.toString()));
+        }
+
+        // Load persona
+        const persona = localStorage.getItem('wanderly-persona') as Dimension;
+        if (persona) {
+            setUserPersona(persona);
         }
     }, [item]);
 
@@ -134,6 +147,25 @@ export default function ItineraryPage({ params }: PageProps) {
             <div className="max-w-7xl mx-auto px-6 py-16 -mt-10 relative z-20">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
                     <div className="lg:col-span-8 space-y-16">
+                        {/* AI Recommendation Reason */}
+                        {userPersona && item.personaReasons?.[userPersona] && (
+                            <div className="bg-[#D97C5F]/5 border border-[#D97C5F]/20 p-8 md:p-10 rounded-[2.5rem] flex flex-col md:flex-row gap-8 items-start relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-[#D97C5F]/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-[#D97C5F]/20 transition-all duration-700" />
+                                <div className="flex-shrink-0 w-16 h-16 bg-[#D97C5F] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-[#D97C5F]/30">
+                                    <Sparkles size={32} />
+                                </div>
+                                <div className="space-y-4 relative z-10">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D97C5F] bg-[#D97C5F]/10 px-3 py-1 rounded-full">AI 專屬推薦理由</span>
+                                        <span className="text-stone-400 text-xs font-bold">Matched for {resultProfiles[userPersona].title}</span>
+                                    </div>
+                                    <p className="text-[#2C1810] text-xl font-bold leading-relaxed font-serif">
+                                        「{item.personaReasons[userPersona]}」
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-stone-100">
                             <h2 className="text-2xl font-bold mb-8 text-stone-800 flex items-center gap-3">
                                 <span className="w-1.5 h-8 bg-orange-500 rounded-full" />
@@ -182,6 +214,37 @@ export default function ItineraryPage({ params }: PageProps) {
                                         <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500" />
                                     </div>
                                 ))}
+                            </div>
+                        </div>
+
+                        {/* Persona Reviews */}
+                        <div className="space-y-8">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-3xl font-bold text-stone-900 font-serif">同頻評論</h2>
+                                <span className="text-stone-400 text-sm font-medium">Persona Reviews</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {item.personaReviews?.map((review, index) => (
+                                    <div key={index} className="bg-white p-6 rounded-3xl border border-stone-100 shadow-sm hover:shadow-md transition-all">
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <img src={review.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${review.author}`} alt={review.author} className="w-10 h-10 rounded-full bg-stone-100" />
+                                            <div>
+                                                <p className="font-bold text-stone-800 text-sm">{review.author}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${userPersona && review.persona === userPersona ? 'bg-[#D97C5F] text-white' : 'bg-stone-100 text-stone-500'}`}>
+                                                        {userPersona && review.persona === userPersona ? `跟你一樣是：${resultProfiles[review.persona].title}` : resultProfiles[review.persona].title}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-stone-600 text-sm leading-relaxed">
+                                            {review.content}
+                                        </p>
+                                    </div>
+                                ))}
+                                {(!item.personaReviews || item.personaReviews.length === 0) && (
+                                    <p className="text-stone-400 text-sm italic">尚無同頻旅人的評論。</p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -237,12 +300,12 @@ export default function ItineraryPage({ params }: PageProps) {
                                 </div>
                             </div>
 
-                            <div className="pt-6 relative z-10">
+                            <div className="pt-6 relative z-10 space-y-4">
                                 <button
                                     onClick={toggleSave}
-                                    className={`w-full font-bold py-5 px-8 rounded-2xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-3 group ${isSaved
-                                            ? 'bg-white text-orange-500 border border-orange-100 hover:bg-orange-50'
-                                            : 'bg-orange-500 hover:bg-orange-600 text-white'
+                                    className={`w-full font-bold py-4 px-8 rounded-2xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-3 group ${isSaved
+                                        ? 'bg-white text-orange-500 border border-orange-100 hover:bg-orange-50'
+                                        : 'bg-orange-500 hover:bg-orange-600 text-white'
                                         }`}
                                 >
                                     {isSaved ? (
@@ -252,11 +315,28 @@ export default function ItineraryPage({ params }: PageProps) {
                                         </>
                                     ) : (
                                         <>
-                                            加入我的清單
-                                            <LucideArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                            <Heart size={18} />
+                                            收藏至清單
                                         </>
                                     )}
                                 </button>
+
+                                <button
+                                    onClick={() => alert('已加入現有行程！')}
+                                    className="w-full bg-white text-stone-800 font-bold py-4 px-8 rounded-2xl border border-stone-200 hover:border-[#D97C5F] hover:text-[#D97C5F] transition-all shadow-sm flex items-center justify-center gap-3"
+                                >
+                                    <PlusCircle size={18} />
+                                    加入行程
+                                </button>
+
+                                <button
+                                    onClick={() => alert('已加入共同投票箱！')}
+                                    className="w-full bg-stone-800 text-white font-bold py-4 px-8 rounded-2xl hover:bg-black transition-all shadow-sm flex items-center justify-center gap-3"
+                                >
+                                    <Vote size={18} />
+                                    加入投票
+                                </button>
+
                                 <p className="text-center text-stone-500 text-xs mt-4">已加入 1,240 個旅人的計畫中</p>
                             </div>
                         </div>

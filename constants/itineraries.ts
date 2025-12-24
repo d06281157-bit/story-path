@@ -1,4 +1,5 @@
-// constants/itineraries.ts
+import { Dimension } from '@/lib/quizData';
+
 export interface TripDetail {
     duration: string;
     location: string;
@@ -20,8 +21,15 @@ export interface HistoricalData {
     comparisonSpots: HistoricalSpot[];
 }
 
+export interface PersonaReview {
+    author: string;
+    persona: Dimension;
+    content: string;
+    avatar?: string;
+}
+
 export interface Itinerary {
-    id: string; 
+    id: string;
     slug: string;
     tag: string;
     title: string;
@@ -31,6 +39,9 @@ export interface Itinerary {
     images: string[];
     region: '北部' | '中部' | '南部' | '東部';
     historicalData?: HistoricalData;
+    personaReasons?: Partial<Record<Dimension, string>>;
+    personaReviews?: PersonaReview[];
+    matchScores?: Partial<Record<Dimension, number>>;
 }
 
 export const ITINERARIES: Itinerary[] = [
@@ -49,6 +60,32 @@ export const ITINERARIES: Itinerary[] = [
             '/images/itineraries/A-North-1.jpg',
             '/images/itineraries/A-North-2.jpg',
             '/images/itineraries/A-North-3.jpg'
+        ],
+        personaReasons: {
+            Culture: "這條「城市文化線」帶你重新理解台北如何一步步成形。站在曾經的城市邊界，看見歷史重疊在同一個街區裡，非常適合喜歡深思歷史細節的你。",
+            OldStreet: "有些城市，必須抬頭閱讀。大稻埕的建築仍在說話，這裡的紅磚牆與巴洛克立面，是巷弄故事派收集記憶碎片的絕佳對象。",
+            Lifestyle: "在大稻埕，生活感是與歷史並進的。從中藥材的香氣到永樂市場的熱鬧，你能感受到最真實的台北脈搏。",
+            Nature: "雖然是城市路線，但大稻埕碼頭的河岸與夕陽，能讓自然觀察者在城市中找到開闊的呼吸空間。"
+        },
+        matchScores: {
+            Culture: 98,
+            OldStreet: 92,
+            Lifestyle: 85,
+            Nature: 70
+        },
+        personaReviews: [
+            {
+                author: "小林",
+                persona: "Culture",
+                content: "身為文化愛好者，大稻埕的建築立面真的是寶庫！每一棟樓都有故事，AI 推薦的導覽點非常精確。",
+                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+            },
+            {
+                author: "阿明",
+                persona: "OldStreet",
+                content: "在迪化街的窄巷裡迷路，是一件非常享受的事情。看到了很多隱藏版的鐵窗花！",
+                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka"
+            }
         ],
         historicalData: {
             oldMapUrl: 'https://map.taiwan-history.org/1904_dadaocheng.jpg',
