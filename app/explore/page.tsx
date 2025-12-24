@@ -4,9 +4,16 @@ import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { MapPin, ArrowRight, Heart, ChevronDown, Filter, Search, Sparkles } from 'lucide-react';
+import { MapPin, ArrowRight, Heart, ChevronDown, Filter, Search, Sparkles, List, Map } from 'lucide-react';
 import { ITINERARIES } from '@/constants/itineraries'
 import { Dimension, resultProfiles } from '@/lib/quizData';
+import dynamic from 'next/dynamic';
+
+// Dynamic import for map component (avoid SSR issues with Leaflet)
+const ExploreMap = dynamic(() => import('@/components/ExploreMap'), {
+    ssr: false,
+    loading: () => <div className="w-full h-[600px] bg-stone-100 rounded-3xl flex items-center justify-center"><div className="text-stone-400 font-bold animate-pulse">載入地圖中...</div></div>
+});
 
 const CATEGORIES = ['所有風格', '城市文化', '老街', '自然', '展覽', '生活', '季節主題'];
 const REGIONS = ['所有地區', '北部', '中部', '南部', '東部'];
@@ -21,6 +28,7 @@ function ExploreContent() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isPersonaMode, setIsPersonaMode] = useState(false);
     const [userPersona, setUserPersona] = useState<Dimension | null>(null);
+    const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
     const [isRegionOpen, setIsRegionOpen] = useState(false);
     const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -146,6 +154,24 @@ function ExploreContent() {
                                 </button>
                             </div>
                         )}
+
+                        {/* View Toggle (List / Map) */}
+                        <div className="flex bg-stone-200/50 p-1 rounded-xl gap-1 shrink-0">
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'list' ? 'bg-white text-[#2C1810] shadow-sm' : 'text-stone-500 hover:bg-stone-200'}`}
+                            >
+                                <List size={14} />
+                                列表
+                            </button>
+                            <button
+                                onClick={() => setViewMode('map')}
+                                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'map' ? 'bg-white text-[#2C1810] shadow-sm' : 'text-stone-500 hover:bg-stone-200'}`}
+                            >
+                                <Map size={14} />
+                                地圖
+                            </button>
+                        </div>
                     </div>
 
                     {/* Bottom Row: Tags & Dropdowns */}
@@ -200,79 +226,89 @@ function ExploreContent() {
                 </div>
             </div>
 
-            {/* Grid Content */}
+            {/* Content Area - List or Map */}
             <div className="max-w-7xl mx-auto px-6 pt-12 pb-24">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredRoutes.map((route) => (
-                        <div
-                            key={route.id}
-                            className="group block relative h-full"
-                        >
-                            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-sm shadow-stone-200 group-hover:shadow-xl transition-all duration-500 bg-gray-200">
-                                <Link href={`/explore/${route.slug}`} className="absolute inset-0 z-10">
-                                    <Image
-                                        src={route.images[0]}
-                                        alt={route.title}
-                                        fill
-                                        className="object-cover group-hover:scale-105 transition-transform duration-700"
-                                        unoptimized
-                                    />
-
-                                    {/* Overlay Gradient */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-70 transition-opacity" />
-
-                                    {/* Floating Tags (Left) */}
-                                    <div className="absolute top-4 left-4 flex gap-2">
-                                        <span className="px-3 py-1 bg-white/20 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold rounded-full tracking-wider uppercase">
-                                            {route.region}
-                                        </span>
-                                        <span className="px-3 py-1 bg-[#D97C5F]/80 backdrop-blur-md text-white text-[10px] font-bold rounded-full tracking-wider uppercase">
-                                            {route.tag}
-                                        </span>
-                                        {isPersonaMode && userPersona && route.matchScores?.[userPersona] && (
-                                            <span className="px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black rounded-full shadow-lg">
-                                                {route.matchScores[userPersona]}% MATCH
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="absolute bottom-0 left-0 p-6 w-full transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                                        <h3 className="text-xl md:text-2xl font-bold text-white font-serif mb-2 leading-snug">
-                                            {route.title}
-                                        </h3>
-                                        <div className="flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
-                                            <p className="text-white/80 text-xs line-clamp-1 flex-1 pr-4">
-                                                {route.description}
-                                            </p>
-                                            <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
-                                                <ArrowRight size={14} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Link>
-
-                                {/* My List Heart Icon (Right) - Z-INDEX MUST BE HIGHER THAN LINK */}
-                                <button
-                                    onClick={(e) => toggleFavorite(e, route.id)}
-                                    className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-black/20 backdrop-blur-md border border-white/10 text-white hover:bg-white/30 transition-all duration-300 group/heart"
+                {viewMode === 'list' ? (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {filteredRoutes.map((route) => (
+                                <div
+                                    key={route.id}
+                                    className="group block relative h-full"
                                 >
-                                    <Heart
-                                        size={18}
-                                        className={`transition-all duration-300 ${favorites.includes(route.id)
-                                            ? 'fill-red-500 text-red-500 scale-110'
-                                            : 'group-hover/heart:scale-110'}`}
-                                    />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                                    <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-sm shadow-stone-200 group-hover:shadow-xl transition-all duration-500 bg-gray-200">
+                                        <Link href={`/explore/${route.slug}`} className="absolute inset-0 z-10">
+                                            <Image
+                                                src={route.images[0]}
+                                                alt={route.title}
+                                                fill
+                                                className="object-cover group-hover:scale-105 transition-transform duration-700"
+                                                unoptimized
+                                            />
 
-                {filteredRoutes.length === 0 && (
-                    <div className="text-center py-20 text-gray-400">
-                        <p>此分類尚無行程。</p>
-                    </div>
+                                            {/* Overlay Gradient */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-70 transition-opacity" />
+
+                                            {/* Floating Tags (Left) */}
+                                            <div className="absolute top-4 left-4 flex gap-2">
+                                                <span className="px-3 py-1 bg-white/20 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold rounded-full tracking-wider uppercase">
+                                                    {route.region}
+                                                </span>
+                                                <span className="px-3 py-1 bg-[#D97C5F]/80 backdrop-blur-md text-white text-[10px] font-bold rounded-full tracking-wider uppercase">
+                                                    {route.tag}
+                                                </span>
+                                                {isPersonaMode && userPersona && route.matchScores?.[userPersona] && (
+                                                    <span className="px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black rounded-full shadow-lg">
+                                                        {route.matchScores[userPersona]}% MATCH
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="absolute bottom-0 left-0 p-6 w-full transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                                                <h3 className="text-xl md:text-2xl font-bold text-white font-serif mb-2 leading-snug">
+                                                    {route.title}
+                                                </h3>
+                                                <div className="flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
+                                                    <p className="text-white/80 text-xs line-clamp-1 flex-1 pr-4">
+                                                        {route.description}
+                                                    </p>
+                                                    <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
+                                                        <ArrowRight size={14} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </Link>
+
+                                        {/* My List Heart Icon (Right) - Z-INDEX MUST BE HIGHER THAN LINK */}
+                                        <button
+                                            onClick={(e) => toggleFavorite(e, route.id)}
+                                            className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-black/20 backdrop-blur-md border border-white/10 text-white hover:bg-white/30 transition-all duration-300 group/heart"
+                                        >
+                                            <Heart
+                                                size={18}
+                                                className={`transition-all duration-300 ${favorites.includes(route.id)
+                                                    ? 'fill-red-500 text-red-500 scale-110'
+                                                    : 'group-hover/heart:scale-110'}`}
+                                            />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {filteredRoutes.length === 0 && (
+                            <div className="text-center py-20 text-gray-400">
+                                <p>此分類尚無行程。</p>
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    <ExploreMap
+                        routes={filteredRoutes}
+                        userPersona={userPersona}
+                        isPersonaMode={isPersonaMode}
+                    />
                 )}
             </div>
         </div>

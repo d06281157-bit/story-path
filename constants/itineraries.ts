@@ -38,6 +38,7 @@ export interface Itinerary {
     tripDetails: TripDetail;
     images: string[];
     region: '北部' | '中部' | '南部' | '東部';
+    coordinates?: { lat: number; lng: number };
     historicalData?: HistoricalData;
     personaReasons?: Partial<Record<Dimension, string>>;
     personaReviews?: PersonaReview[];
@@ -56,6 +57,7 @@ export const ITINERARIES: Itinerary[] = [
 這條「城市文化線」帶你重新理解台北如何一步步成形。站在曾经的城市邊界，看見歷史沒有被整理成一條直線，而是重疊在同一個街區裡。`,
         highlights: ['迪化街歷史街屋', '霞海城隍廟', '老建築立面導覽', '台北舊城門(北門)'],
         tripDetails: { duration: '3-4 小時', location: '台北・大稻埕', transport: '步行', season: '四季皆宜' },
+        coordinates: { lat: 25.0553, lng: 121.5097 },
         images: [
             '/images/itineraries/A-North-1.jpg',
             '/images/itineraries/A-North-2.jpg',
@@ -117,6 +119,7 @@ export const ITINERARIES: Itinerary[] = [
         description: `從台中火車站舊站出發，走過宮原眼科、臺中州廳，這是一段關於日治時期城市規劃與現代復甦的故事。`,
         highlights: ['台中火車站舊站', '宮原眼科', '臺中州廳', '綠空廊道'],
         tripDetails: { duration: '3-4 小時', location: '台中・中區', transport: '步行', season: '四季皆宜' },
+        coordinates: { lat: 24.1370, lng: 120.6868 },
         images: [
             '/images/itineraries/A-Central-1.jpg',
             '/images/itineraries/A-Central-2.jpg',
@@ -133,6 +136,7 @@ export const ITINERARIES: Itinerary[] = [
         description: `台南的厚度，在街道。它是台灣歷史的起點，政權更迭的痕跡層層疊加在建築的立面上。從清代學宮到當代幾何美術館，你就能穿越三個世紀。`,
         highlights: ['孔廟｜紅牆裡的儒學初心', '台灣文學館｜統治權力到文字溫柔', '美術館二館｜光影碎裂的當代容器', '司法博物館｜凝視正義的巴洛克'],
         tripDetails: { duration: '4-5 小時', location: '台南・中西區', transport: '步行', season: '四季皆宜' },
+        coordinates: { lat: 22.9908, lng: 120.2044 },
         images: [
             '/images/itineraries/A-South-1.jpg',
             '/images/itineraries/A-South-2.jpg',
@@ -148,6 +152,7 @@ export const ITINERARIES: Itinerary[] = [
         description: `穿梭在松園別館與將軍府之間，感受花蓮在日治時期的軍事地位與獨特的海港氛圍。`,
         highlights: ['松園別館', '將軍府', '舊鐵道文化商圈', '花蓮港景點'],
         tripDetails: { duration: '3-4 小時', location: '花蓮市', transport: '自行車/步行', season: '四季皆宜' },
+        coordinates: { lat: 23.9910, lng: 121.6011 },
         images: [
             '/images/home/cards/east_hualien_city.png'
         ]
@@ -163,6 +168,7 @@ export const ITINERARIES: Itinerary[] = [
         description: `山城的雨，總是一層一層地把世界洗舊。這裡曾經是亞洲的金都，夜夜笙歌的「小上海」。讓我們穿梭在高低落差間，閱讀這座礦業之城的寂寥。`,
         highlights: ['九份老街巷弄', '黃金博物園區', '昇平戲院', '祈堂老街'],
         tripDetails: { duration: '4-5 小時', location: '新北・瑞芳', transport: '步行', season: '四季皆宜' },
+        coordinates: { lat: 25.1095, lng: 121.8439 },
         images: [
             '/images/itineraries/B-North-1.jpg',
             '/images/itineraries/B-North-2.jpg'
@@ -177,6 +183,7 @@ export const ITINERARIES: Itinerary[] = [
         description: `如果時間是一條河流，那麼鹿港就是被泥沙淤積而留住的渡口。走進鹿港，不是為了趕景點，而是為了在紅磚道上迷路。`,
         highlights: ['鹿港老街', '摸乳巷', '龍山寺', '傳統工藝師傅工作室'],
         tripDetails: { duration: '3-4 小時', location: '彰化・鹿港', transport: '步行', season: '四季皆宜' },
+        coordinates: { lat: 24.0565, lng: 120.4352 },
         images: [
             '/images/itineraries/B-Central-1.jpg',
             '/images/itineraries/B-Central-2.jpg',
@@ -193,6 +200,7 @@ export const ITINERARIES: Itinerary[] = [
         description: `踏入鹽埕，尋找老冰店、大溝頂與舊街區的建築，感受高雄最早期的繁華生活節奏。`,
         highlights: ['新樂街老冰店', '堀江商場', '大溝頂老街', '舊街區建築巡禮'],
         tripDetails: { duration: '2-3 小時', location: '高雄・鹽埕', transport: '步行', season: '四季皆宜' },
+        coordinates: { lat: 22.6198, lng: 120.2838 },
         images: [
             '/images/itineraries/B-South-1.jpg',
             '/images/itineraries/B-South-2.jpg',
