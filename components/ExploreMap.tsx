@@ -112,10 +112,10 @@ export default function ExploreMap({ routes, userPersona, isPersonaMode }: Explo
                 style={{ height: '600px', width: '100%', borderRadius: '1.5rem' }}
                 className="z-10"
             >
-                {/* Warm-toned map style */}
+                {/* OpenStreetMap - Free, no API key required */}
                 <TileLayer
-                    attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
-                    url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
                 {routesWithCoords.map((route) => {
