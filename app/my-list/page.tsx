@@ -127,7 +127,7 @@ export default function MyListPage() {
                 }`}
             >
               <Sparkles size={16} />
-              AI 智慧計畫 ({customPlans.length})
+              AI 智慧計畫 ({customPlans.length + quickPlanItineraries.length})
             </button>
           </div>
         </div>
