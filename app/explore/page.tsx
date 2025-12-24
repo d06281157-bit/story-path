@@ -4,8 +4,9 @@ import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { MapPin, ArrowRight, Heart, ChevronDown, Filter } from 'lucide-react';
+import { MapPin, ArrowRight, Heart, ChevronDown, Filter, Search, Sparkles } from 'lucide-react';
 import { ITINERARIES } from '@/constants/itineraries'
+import { Dimension, resultProfiles } from '@/lib/quizData';
 
 const CATEGORIES = ['所有風格', '城市文化', '老街', '自然', '展覽', '生活', '季節主題'];
 const REGIONS = ['所有地區', '北部', '中部', '南部', '東部'];
@@ -17,6 +18,10 @@ function ExploreContent() {
     const [selectedCategory, setSelectedCategory] = useState('所有風格');
     const [selectedRegion, setSelectedRegion] = useState('所有地區');
     const [favorites, setFavorites] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isPersonaMode, setIsPersonaMode] = useState(false);
+    const [userPersona, setUserPersona] = useState<Dimension | null>(null);
+
     const [isRegionOpen, setIsRegionOpen] = useState(false);
     const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
@@ -27,11 +32,17 @@ function ExploreContent() {
         }
     }, [categoryParam]);
 
-    // Load favorites from localStorage
+    // Load persona and favorites from localStorage
     useEffect(() => {
-        const saved = localStorage.getItem('my-list');
-        if (saved) {
-            setFavorites(JSON.parse(saved));
+        const savedFavs = localStorage.getItem('my-list');
+        if (savedFavs) {
+            setFavorites(JSON.parse(savedFavs));
+        }
+
+        const persona = localStorage.getItem('wanderly-persona') as Dimension;
+        if (persona) {
+            setUserPersona(persona);
+            setIsPersonaMode(true); // Default to persona mode if they have one
         }
     }, []);
 
@@ -47,113 +58,145 @@ function ExploreContent() {
         localStorage.setItem('my-list', JSON.stringify(newFavs));
     };
 
-    // Dual-track Filter Matching
+    // Integrated Filter Matching
     const filteredRoutes = ITINERARIES.filter(route => {
+        // Category Filter
         const categoryMatch = selectedCategory === '所有風格' || route.tag === selectedCategory;
+
+        // Region Filter
         const regionMatch = selectedRegion === '所有地區' || route.region === selectedRegion;
-        return categoryMatch && regionMatch;
+
+        // Search Filter (Title, Region, Tag)
+        const query = searchQuery.toLowerCase();
+        const searchMatch = !searchQuery ||
+            route.title.toLowerCase().includes(query) ||
+            route.region.toLowerCase().includes(query) ||
+            route.tag.toLowerCase().includes(query);
+
+        // Persona Filter (If active, score > 80)
+        let personaMatch = true;
+        if (isPersonaMode && userPersona) {
+            const score = route.matchScores?.[userPersona] || 0;
+            personaMatch = score >= 80;
+        }
+
+        return categoryMatch && regionMatch && searchMatch && personaMatch;
     });
 
     return (
         <div className="min-h-screen bg-[#FFF9F2] text-[#2C1810] font-sans">
 
-            {/* Hero Section */}
-            <div className="relative py-24 px-6 text-center overflow-hidden h-[400px] flex items-center justify-center">
-                {/* Background Image with Overlay */}
+            {/* Hero Section - Warm & Soft Aesthetic */}
+            <div className="relative py-28 px-6 text-center overflow-hidden bg-[#FFF9F2]">
+                {/* Soft Decorative Glows */}
                 <div className="absolute inset-0 z-0">
-                    <Image
-                        src="https://images.unsplash.com/photo-1541414779247-679542fb6d01?q=80&w=2000&auto=format&fit=crop"
-                        alt="Taiwan Mountain Landscape"
-                        fill
-                        className="object-cover opacity-60 scale-105 animate-slow-zoom"
-                        priority
-                        unoptimized
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-b from-[#FFF9F2]/20 via-[#FFF9F2]/40 to-[#FFF9F2]" />
+                    <div className="absolute top-[-10%] left-[-5%] w-[50%] h-[120%] bg-[#D97C5F]/5 rounded-full blur-[100px] animate-pulse-slow" />
+                    <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[120%] bg-[#D97C5F]/10 rounded-full blur-[120px] animate-pulse-slow" />
                 </div>
 
-                <div className="relative z-10 max-w-3xl mx-auto space-y-4">
-                    <span className="text-[#D97C5F] font-bold tracking-[0.2em] text-sm uppercase">Curated Itineraries</span>
-                    <h1 className="text-4xl md:text-6xl font-black font-serif tracking-tight text-[#2C1810] leading-tight">
-                        探索台灣靈魂
-                    </h1>
-                    <p className="text-gray-600 max-w-lg mx-auto leading-relaxed font-medium">
-                        我們精選了 24 條最具代表性的深度路線，涵蓋各個地區與文化主題，帶您走進台灣最真實的故事場景。
+                <div className="relative z-10 max-w-4xl mx-auto space-y-6 animate-fade-in">
+                    <div className="space-y-4">
+                        <span className="inline-block text-[#D97C5F] font-black tracking-[0.2em] text-[11px] uppercase bg-white px-4 py-1.5 rounded-full border border-[#D97C5F]/10 shadow-sm">
+                            Curated Itineraries
+                        </span>
+                        <h1 className="text-4xl md:text-6xl font-black font-serif tracking-tight text-[#2C1810] leading-tight">
+                            探索台灣靈魂
+                        </h1>
+                    </div>
+                    <div className="w-12 h-1 bg-[#D97C5F]/20 mx-auto rounded-full" />
+                    <p className="text-stone-500/80 max-w-2xl mx-auto leading-relaxed text-lg font-medium">
+                        我們精選了 24 條最具代表性的深度路線，涵蓋各個地區與文化主題，<br className="hidden md:block" />帶您走進台灣最真實的故事場景。
                     </p>
                 </div>
             </div>
 
-            {/* Filter Dropdowns - Sticky Header */}
-            <div className="sticky top-0 z-30 bg-[#FFF9F2]/90 backdrop-blur-xl border-b border-[#D97C5F]/10 shadow-sm">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-2 mr-4">
-                        <Filter size={18} className="text-[#D97C5F]" />
-                        <span className="text-xs font-black text-stone-400 uppercase tracking-widest">進階篩選</span>
-                    </div>
+            {/* Smart Filter Layer - Sticky */}
+            <div className="sticky top-0 z-30 bg-[#FFF9F2]/80 backdrop-blur-2xl border-b border-[#D97C5F]/10 px-6 py-4">
+                <div className="max-w-7xl mx-auto space-y-4">
 
-                    {/* Region Dropdown */}
-                    <div className="relative">
-                        <button
-                            onClick={() => { setIsRegionOpen(!isRegionOpen); setIsCategoryOpen(false); }}
-                            className="flex items-center gap-3 px-6 py-2.5 bg-white border border-stone-200 rounded-2xl text-sm font-bold shadow-sm hover:border-[#D97C5F]/50 transition-all min-w-[160px] justify-between group"
-                        >
-                            <span className={selectedRegion === '所有地區' ? 'text-stone-400' : 'text-[#D97C5F]'}>
-                                {selectedRegion}
-                            </span>
-                            <ChevronDown size={16} className={`text-stone-300 group-hover:text-[#D97C5F] transition-transform ${isRegionOpen ? 'rotate-180' : ''}`} />
-                        </button>
+                    {/* Top Row: Search & Persona Toggle */}
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                        {/* Search Bar (Glassmorphism) */}
+                        <div className="relative flex-1 w-full group">
+                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-[#D97C5F] transition-colors" size={20} />
+                            <input
+                                type="text"
+                                placeholder="搜尋地點、地區或風格標籤..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-14 pr-6 py-3.5 bg-white/40 border border-white rounded-2xl shadow-sm backdrop-blur-md focus:bg-white/80 focus:ring-2 focus:ring-[#D97C5F]/20 outline-none transition-all placeholder:text-stone-400 font-medium"
+                            />
+                        </div>
 
-                        {isRegionOpen && (
-                            <div className="absolute top-full left-0 mt-2 w-full bg-white border border-stone-100 rounded-2xl shadow-xl z-50 py-2 animate-scale-in">
-                                {REGIONS.map(reg => (
-                                    <button
-                                        key={reg}
-                                        onClick={() => { setSelectedRegion(reg); setIsRegionOpen(false); }}
-                                        className={`w-full text-left px-6 py-2.5 text-sm font-bold transition-colors ${selectedRegion === reg ? 'bg-[#D97C5F]/5 text-[#D97C5F]' : 'text-stone-500 hover:bg-stone-50'}`}
-                                    >
-                                        {reg}
-                                    </button>
-                                ))}
+                        {/* Persona Toggle */}
+                        {userPersona && (
+                            <div className="flex bg-stone-200/50 p-1.5 rounded-2xl gap-1 shrink-0">
+                                <button
+                                    onClick={() => setIsPersonaMode(true)}
+                                    className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all ${isPersonaMode ? 'bg-[#D97C5F] text-white shadow-lg' : 'text-stone-500 hover:bg-stone-200'}`}
+                                >
+                                    <Sparkles size={16} />
+                                    為我推薦
+                                </button>
+                                <button
+                                    onClick={() => setIsPersonaMode(false)}
+                                    className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all ${!isPersonaMode ? 'bg-[#2C1810] text-white shadow-lg' : 'text-stone-500 hover:bg-stone-200'}`}
+                                >
+                                    探索全部
+                                </button>
                             </div>
                         )}
                     </div>
 
-                    {/* Category Dropdown */}
-                    <div className="relative">
-                        <button
-                            onClick={() => { setIsCategoryOpen(!isCategoryOpen); setIsRegionOpen(false); }}
-                            className="flex items-center gap-3 px-6 py-2.5 bg-white border border-stone-200 rounded-2xl text-sm font-bold shadow-sm hover:border-[#D97C5F]/50 transition-all min-w-[160px] justify-between group"
-                        >
-                            <span className={selectedCategory === '所有風格' ? 'text-stone-400' : 'text-[#2C1810]'}>
-                                {selectedCategory}
-                            </span>
-                            <ChevronDown size={16} className={`text-stone-300 group-hover:text-[#D97C5F] transition-transform ${isCategoryOpen ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {isCategoryOpen && (
-                            <div className="absolute top-full left-0 mt-2 w-full bg-white border border-stone-100 rounded-2xl shadow-xl z-50 py-2 animate-scale-in">
-                                {CATEGORIES.map(cat => (
-                                    <button
-                                        key={cat}
-                                        onClick={() => { setSelectedCategory(cat); setIsCategoryOpen(false); }}
-                                        className={`w-full text-left px-6 py-2.5 text-sm font-bold transition-colors ${selectedCategory === cat ? 'bg-[#2C1810]/5 text-[#2C1810]' : 'text-stone-500 hover:bg-stone-50'}`}
-                                    >
-                                        {cat}
-                                    </button>
-                                ))}
+                    {/* Bottom Row: Tags & Dropdowns */}
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        {/* Region Pick (Static) */}
+                        <div className="flex items-center gap-2 pr-4 border-r border-stone-200 min-w-fit">
+                            <Filter size={14} className="text-[#D97C5F]" />
+                            <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">區域</span>
+                            <div className="relative">
+                                <button
+                                    onClick={() => { setIsRegionOpen(!isRegionOpen); setIsCategoryOpen(false); }}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-white border border-stone-200 rounded-lg text-xs font-bold hover:border-[#D97C5F]/50 transition-all shadow-sm"
+                                >
+                                    <MapPin size={12} className={selectedRegion === '所有地區' ? 'text-stone-300' : 'text-[#D97C5F]'} />
+                                    {selectedRegion}
+                                    <ChevronDown size={14} className={`transition-transform text-stone-400 ${isRegionOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {isRegionOpen && (
+                                    <>
+                                        {/* Overlay to close when clicking outside */}
+                                        <div className="fixed inset-0 z-40" onClick={() => setIsRegionOpen(false)} />
+                                        <div className="absolute top-full left-0 mt-2 w-40 bg-white border border-stone-100 rounded-xl shadow-xl z-50 py-2 animate-scale-in">
+                                            {REGIONS.map(reg => (
+                                                <button
+                                                    key={reg}
+                                                    onClick={() => { setSelectedRegion(reg); setIsRegionOpen(false); }}
+                                                    className={`w-full text-left px-4 py-2.5 text-xs font-bold transition-colors ${selectedRegion === reg ? 'bg-[#D97C5F]/5 text-[#D97C5F]' : 'text-stone-500 hover:bg-stone-50'}`}
+                                                >
+                                                    {reg}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                             </div>
-                        )}
-                    </div>
+                        </div>
 
-                    {/* Clear Filters Button (Only shown if something is selected) */}
-                    {(selectedRegion !== '所有地區' || selectedCategory !== '所有風格') && (
-                        <button
-                            onClick={() => { setSelectedRegion('所有地區'); setSelectedCategory('所有風格'); }}
-                            className="text-xs font-bold text-stone-400 hover:text-[#D97C5F] transition-colors decoration-dotted underline underline-offset-4"
-                        >
-                            清除所有篩選
-                        </button>
-                    )}
+                        {/* Tag Bar - Scrollable */}
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                            <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest mr-2 md:hidden">風格</span>
+                            {CATEGORIES.map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setSelectedCategory(cat)}
+                                    className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${selectedCategory === cat ? 'bg-[#2C1810] border-[#2C1810] text-white shadow-md' : 'bg-white border-stone-200 text-stone-500 hover:border-[#D97C5F]/30'}`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -186,6 +229,11 @@ function ExploreContent() {
                                         <span className="px-3 py-1 bg-[#D97C5F]/80 backdrop-blur-md text-white text-[10px] font-bold rounded-full tracking-wider uppercase">
                                             {route.tag}
                                         </span>
+                                        {isPersonaMode && userPersona && route.matchScores?.[userPersona] && (
+                                            <span className="px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black rounded-full shadow-lg">
+                                                {route.matchScores[userPersona]}% MATCH
+                                            </span>
+                                        )}
                                     </div>
 
                                     {/* Content */}

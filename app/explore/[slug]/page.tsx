@@ -343,6 +343,26 @@ export default function ItineraryPage({ params }: PageProps) {
                     </div>
                 </div>
             </div>
+
+            {/* Quiz CTA Section - Light & Airy */}
+            <div className="py-32 px-6">
+                <div className="max-w-4xl mx-auto text-center space-y-10">
+                    <div className="space-y-2">
+                        <p className="text-[#D97C5F] font-black tracking-[0.2em] text-[10px] uppercase">Haven't decided yet?</p>
+                        <h2 className="text-3xl md:text-4xl font-black text-[#2C1810] font-serif">
+                            還沒找到你的旅行方式？
+                        </h2>
+                    </div>
+
+                    <Link
+                        href="/"
+                        className="inline-flex items-center gap-3 px-12 py-4 border border-[#D97C5F]/30 rounded-full text-[#D97C5F] font-bold hover:bg-[#D97C5F] hover:text-white transition-all shadow-sm group"
+                    >
+                        開始旅人格測驗
+                        <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                </div>
+            </div>
         </div>
     );
 }
