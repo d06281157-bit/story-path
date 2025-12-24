@@ -187,7 +187,7 @@ export default function ItineraryPage({ params }: PageProps) {
     );
 
     return (
-        <div className="min-h-screen bg-[#fffdf9] font-[family-name:var(--font-geist-sans)]">
+        <div className="min-h-screen bg-white font-[family-name:var(--font-geist-sans)]">
             {showToast && <Toast />}
             {showPlanToast && <PlanToast />}
 

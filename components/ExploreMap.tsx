@@ -159,7 +159,7 @@ export default function ExploreMap({ routes, userPersona, isPersonaMode }: Explo
                                     {/* CTA Button */}
                                     <Link
                                         href={`/explore/${route.slug}`}
-                                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#2C1810] text-white text-sm font-bold rounded-xl hover:bg-black transition-colors"
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-[#D97C5F] text-sm font-bold rounded-xl border border-[#D97C5F] hover:bg-[#D97C5F] hover:text-white transition-colors"
                                     >
                                         查看詳情
                                         <ChevronRight size={14} />
